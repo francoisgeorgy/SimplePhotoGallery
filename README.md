@@ -34,21 +34,21 @@ This is a free, open-source tool that you can use to generate galleries and self
 To create a gallery you need to install he `simple-photo-gallery` package globally and then you can use the `spg` command:
 
 ```bash
-npm install -g simple-photo-gallery@latest
+pnpm add --global simple-photo-gallery@latest
 spg init
 spg build
 ```
 
-Alternatively you can use `npx` to run the commands directly:
+Alternatively, use `pnpm dlx` to run the commands without a global installation:
 
 ```bash
-npx simple-photo-gallery@latest init
-npx simple-photo-gallery@latest build
+pnpm dlx simple-photo-gallery@latest init
+pnpm dlx simple-photo-gallery@latest build
 ```
 
 This will:
 
-1. Install the [simple-photo-gallery](https://www.npmjs.com/package/simple-photo-gallery) package from NPM (if you don't already have it)
+1. Download the [simple-photo-gallery](https://www.npmjs.com/package/simple-photo-gallery) package from the npm registry if needed
 2. Prompt you for your gallery title, description, and header image
 3. Scan your photos and create a `gallery.json` file
 4. Generate optimized thumbnails
@@ -57,6 +57,7 @@ This will:
 ## Installation Requirements
 
 - **Node.js 20+** - [Download here](https://nodejs.org/)
+- **pnpm 10.12.4** - Managed through Corepack using the version pinned in `package.json`
 - **FFmpeg** (for video support) - Install via:
   - macOS: `brew install ffmpeg`
   - Ubuntu/Debian: `sudo apt install ffmpeg`
@@ -64,7 +65,7 @@ This will:
 
 ## Development
 
-This is a monorepo using Yarn workspaces. To set up the development environment:
+This is a monorepo using pnpm workspaces. To set up the development environment:
 
 1. **Clone the repository**
 
@@ -73,27 +74,34 @@ This is a monorepo using Yarn workspaces. To set up the development environment:
    cd spg-core
    ```
 
-2. **Install dependencies**
+2. **Enable pnpm through Corepack**
 
    ```bash
-   yarn install
+   corepack enable
    ```
 
-3. **Build the `common` package** (required for TypeScript/ESLint to resolve `@simple-photo-gallery/common`)
+3. **Install dependencies from the lockfile**
 
    ```bash
-   yarn workspace @simple-photo-gallery/common build
+   pnpm install --frozen-lockfile
    ```
 
-4. **Build the gallery package** (optional, for testing CLI changes)
+4. **Build the `common` package** (required for TypeScript/ESLint to resolve `@simple-photo-gallery/common`)
 
    ```bash
-   yarn workspace simple-photo-gallery build
+   pnpm --filter @simple-photo-gallery/common build
    ```
 
-5. **Run the CLI in development mode**
+5. **Run the repository checks**
+
    ```bash
-   yarn workspace simple-photo-gallery gallery
+   pnpm run ci
+   ```
+
+6. **Run the CLI in development mode**
+
+   ```bash
+   pnpm --filter simple-photo-gallery gallery
    ```
 
 ### Workspace Packages
@@ -111,9 +119,9 @@ This is a monorepo using Yarn workspaces. To set up the development environment:
 
 Each workspace package can be built individually:
 
-- `yarn workspace @simple-photo-gallery/common build`
-- `yarn workspace simple-photo-gallery build`
-- `yarn workspace @simple-photo-gallery/theme-modern build`
+- `pnpm --filter @simple-photo-gallery/common build`
+- `pnpm --filter simple-photo-gallery build`
+- `pnpm --filter @simple-photo-gallery/theme-modern build`
 
 ## Supported Formats
 
@@ -123,11 +131,13 @@ Each workspace package can be built individually:
 ## Architecture
 
 This project uses a multi-theme architecture:
+
 - **Common package** provides shared utilities for all themes
 - **Themes** focus only on layout and presentation
 - **CLI** handles gallery generation and theme orchestration
 
 See the [Architecture Documentation](./docs/architecture.md) for details on how the system works, including:
+
 - Package structure and dependencies
 - Data flow from photos to static HTML
 - Theme system design and resolution

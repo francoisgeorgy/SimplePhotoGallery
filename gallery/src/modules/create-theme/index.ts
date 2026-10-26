@@ -9,7 +9,7 @@ import type { ConsolaInstance } from 'consola';
 
 /**
  * Find the nearest ancestor directory (including the starting directory) that looks like a monorepo root
- * by checking for a package.json with a "workspaces" field.
+ * by checking for pnpm-workspace.yaml or a package.json with a "workspaces" field.
  *
  * This avoids surprising behavior when the CLI is executed from within a workspace package (e.g. ./gallery),
  * but the user expects themes to be created under the monorepo root (e.g. ./themes).
@@ -18,6 +18,10 @@ function findMonorepoRoot(startDir: string): string | undefined {
   let dir = path.resolve(startDir);
 
   while (true) {
+    if (fs.existsSync(path.join(dir, 'pnpm-workspace.yaml'))) {
+      return dir;
+    }
+
     const pkgPath = path.join(dir, 'package.json');
     if (fs.existsSync(pkgPath)) {
       try {
@@ -295,7 +299,7 @@ export async function createTheme(options: CreateThemeOptions, ui: ConsolaInstan
     ui.success(`Theme created successfully at: ${themeDir}`);
     ui.info(`\nNext steps:`);
     ui.info(`1. cd ${themeDir}`);
-    ui.info(`2. yarn install`);
+    ui.info(`2. pnpm install`);
     ui.info(`3. Customize your theme in src/pages/index.astro`);
     ui.info(`4. Initialize a gallery (run from directory with your images): spg init -p <images-folder>`);
     ui.info(`5. Build a gallery with your theme: spg build --theme ${themeDir} -g <gallery-folder>`);

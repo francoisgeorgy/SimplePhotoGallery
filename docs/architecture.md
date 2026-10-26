@@ -24,7 +24,7 @@ spg-core/
 
 ### Why Common Must Be Built First
 
-TypeScript and ESLint need the compiled type definitions from `common/dist/` to resolve imports in gallery and theme packages. Running `yarn workspace @simple-photo-gallery/common build` generates the necessary `.d.ts` files and JavaScript output.
+TypeScript and ESLint need the compiled type definitions from `common/dist/` to resolve imports in gallery and theme packages. Running `pnpm --filter @simple-photo-gallery/common build` generates the necessary `.d.ts` files and JavaScript output.
 
 The common package uses `tsup` to build:
 - TypeScript source files → JavaScript (ESM and CJS)
@@ -435,7 +435,7 @@ Themes are independent npm packages with:
    - Validates theme name format: `/^[a-z0-9-]+$/`
 
 2. **Monorepo Detection**
-   - Searches for workspace root (looks for `package.json` with `workspaces` field)
+   - Searches for workspace root (looks for `pnpm-workspace.yaml` or a `package.json` with a `workspaces` field)
    - If found: prefer `<root>/themes/<name>` as output location
    - Otherwise: use current directory or custom `--path`
 
@@ -465,7 +465,7 @@ Themes are independent npm packages with:
 
 6. **Completion**
    - Print success message with next steps
-   - Suggest running `yarn install` in theme directory
+   - Suggest running `pnpm install` in theme directory
 
 #### Base Template Structure
 
@@ -611,12 +611,12 @@ When changing the common package:
 
 1. **Build Common Package**
    ```bash
-   yarn workspace @simple-photo-gallery/common build
+   pnpm --filter @simple-photo-gallery/common build
    ```
 
 2. **Test Modern Theme**
    ```bash
-   yarn workspace @simple-photo-gallery/theme-modern build
+   pnpm --filter @simple-photo-gallery/theme-modern build
    ```
    Verify no TypeScript errors or build failures
 
@@ -624,7 +624,7 @@ When changing the common package:
    ```bash
    spg create-theme test-theme
    cd themes/test-theme
-   yarn install
+   pnpm install
    ```
 
 4. **Test with Real Gallery**

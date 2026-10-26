@@ -10,7 +10,7 @@ Use this sequence for releases:
 
 1. Check the registry versions with `npm view @simple-photo-gallery/common version`, `npm view @simple-photo-gallery/theme-modern version`, and `npm view simple-photo-gallery version`.
 2. Bump `common/package.json`, `themes/modern/package.json`, and `gallery/package.json` to the same next patch, minor, or major version.
-3. Run `yarn ci` and `yarn release:check --version <version>` from the repository root.
+3. Run `pnpm run ci` and `pnpm run release:check --version <version>` from the repository root.
 4. Commit the release changes.
 5. Push the release commit to `main`.
 6. Create and push the matching version tag, for example `git tag v2.2.2 && git push origin v2.2.2`.

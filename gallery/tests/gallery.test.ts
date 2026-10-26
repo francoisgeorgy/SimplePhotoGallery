@@ -17,7 +17,7 @@ import type { ConsolaInstance } from 'consola';
 
 const testDir = process.cwd();
 
-const tsxPath = path.resolve(testDir, '..', 'node_modules', '.bin', 'tsx');
+const tsxPath = path.resolve(testDir, 'node_modules', '.bin', 'tsx');
 const cliPath = path.resolve(testDir, 'src', 'index.ts');
 
 const singleFixturePath = path.resolve(testDir, 'tests', 'fixtures', 'single');
@@ -33,7 +33,7 @@ const MediaFileWithThumbnailSchema = MediaFileSchema.extend({
 // Helper function to run CLI commands with telemetry disabled
 function runCliCommand(command: string): void {
   execSync(command, {
-    env: { ...process.env, SPG_TELEMETRY_PROVIDER: 'none' },
+    env: { ...process.env, SPG_TELEMETRY: '0', SPG_TELEMETRY_PROVIDER: 'none' },
   });
 }
 

@@ -27,23 +27,21 @@ jobs:
           package-manager-cache: false
           registry-url: "https://registry.npmjs.org"
 
-      - name: Set up Yarn
-        run: |
-          corepack enable
-          corepack prepare yarn@4.9.3 --activate
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Verify release tag and package artifacts
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        run: yarn release:check --version "${RELEASE_TAG#v}"
+        run: pnpm run release:check --version "${RELEASE_TAG#v}"
 
       - name: Run CI checks
-        run: yarn ci
+        run: pnpm run ci
 
       - name: Publish packages
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        run: yarn release --version "${RELEASE_TAG#v}"
+        run: pnpm run release --version "${RELEASE_TAG#v}"

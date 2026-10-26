@@ -24,10 +24,9 @@ const singleFixturePath = path.resolve(testDir, 'tests', 'fixtures', 'single');
 const multiFixturePath = path.resolve(testDir, 'tests', 'fixtures', 'multi');
 const modernThemePath = path.resolve(testDir, '..', 'themes', 'modern');
 const workspaceRoot = path.resolve(testDir, '..');
-const tsxPath = path.resolve(testDir, '..', 'node_modules', '.bin', 'tsx');
+const tsxPath = path.resolve(testDir, 'node_modules', '.bin', 'tsx');
 const cliPath = path.resolve(testDir, 'src', 'index.ts');
 const distCliPath = path.resolve(testDir, 'dist', 'index.js');
-const yarnPath = path.resolve(testDir, '..', '.yarn', 'releases', 'yarn-4.9.3.cjs');
 const packageJson = JSON.parse(readFileSync(path.resolve(testDir, 'package.json'), 'utf8')) as { version: string };
 
 type CliEnv = Record<string, string | undefined>;
@@ -58,17 +57,12 @@ beforeAll(() => {
     'utf8',
   );
 
-  const commonBuildHome = mkdtempSync(path.join(os.tmpdir(), 'spg-cli-e2e-common-build-home-'));
-  try {
-    execFileSync(process.execPath, [yarnPath, 'workspace', '@simple-photo-gallery/common', 'build'], {
-      cwd: workspaceRoot,
-      env: buildPackageManagerEnv(commonBuildHome),
-      stdio: 'pipe',
-      timeout: 180_000,
-    });
-  } finally {
-    rmSync(commonBuildHome, { recursive: true, force: true });
-  }
+  execFileSync('pnpm', ['--filter', '@simple-photo-gallery/common', 'build'], {
+    cwd: workspaceRoot,
+    env: buildPackageManagerEnv(),
+    stdio: 'pipe',
+    timeout: 180_000,
+  });
 });
 
 afterEach(() => {
@@ -116,16 +110,12 @@ function buildEnv(options: RunCliOptions): CliEnv {
   };
 }
 
-function buildPackageManagerEnv(home: string): CliEnv {
+function buildPackageManagerEnv(): CliEnv {
   return {
     ...process.env,
-    APPDATA: path.join(home, 'AppData', 'Roaming'),
     CI: '1',
-    HOME: home,
     SPG_TELEMETRY: '0',
     SPG_TELEMETRY_PROVIDER: 'none',
-    USERPROFILE: home,
-    XDG_CONFIG_HOME: path.join(home, '.config'),
   };
 }
 
@@ -463,17 +453,12 @@ describe('CLI help, telemetry, and validation', () => {
 
 describe('packaged CLI e2e smoke', () => {
   beforeAll(() => {
-    const buildHome = mkdtempSync(path.join(os.tmpdir(), 'spg-cli-e2e-build-home-'));
-    try {
-      execFileSync(process.execPath, [yarnPath, 'build'], {
-        cwd: testDir,
-        env: buildPackageManagerEnv(buildHome),
-        stdio: 'pipe',
-        timeout: 180_000,
-      });
-    } finally {
-      rmSync(buildHome, { recursive: true, force: true });
-    }
+    execFileSync('pnpm', ['build'], {
+      cwd: testDir,
+      env: buildPackageManagerEnv(),
+      stdio: 'pipe',
+      timeout: 180_000,
+    });
   }, 180_000);
 
   test('runs the built dist CLI version and help commands', () => {

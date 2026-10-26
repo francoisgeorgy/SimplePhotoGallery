@@ -59,7 +59,7 @@ After creating your theme:
 
 ```bash
 cd ./themes/my-theme
-yarn install
+pnpm install
 ```
 
 > **Note:** The generated theme requires `GALLERY_JSON_PATH` to be set (it's how the theme reads your `gallery.json`). When you run `spg build`, the CLI sets it automatically. When you run `astro dev` directly, you need to set it yourself (see "Theme Development" below).
@@ -511,14 +511,14 @@ spg init -p /path/to/photos -g /path/to/gallery
 # macOS / Linux
 export GALLERY_JSON_PATH="/path/to/gallery/gallery.json"
 export GALLERY_OUTPUT_DIR="/path/to/gallery"
-yarn dev
+pnpm dev
 ```
 
 ```bash
 # Windows (PowerShell)
 $env:GALLERY_JSON_PATH="C:\path\to\gallery\gallery.json"
 $env:GALLERY_OUTPUT_DIR="C:\path\to\gallery"
-yarn dev
+pnpm dev
 ```
 
 ### Best Practices

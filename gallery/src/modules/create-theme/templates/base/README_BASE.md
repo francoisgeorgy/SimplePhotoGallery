@@ -16,7 +16,7 @@ This theme is a copy of the **modern theme** and includes all the production-rea
 1. Install dependencies:
 
    ```bash
-   yarn install
+   pnpm install
    ```
 
 2. Customize your theme in `src/pages/index.astro` and the components in `src/components/`

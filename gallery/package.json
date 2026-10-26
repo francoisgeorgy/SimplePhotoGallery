@@ -39,7 +39,7 @@
     "gallery": "SPG_TELEMETRY_PROVIDER=none tsx src/index.ts",
     "clean": "rm -rf dist",
     "compile": "tsc --noEmit",
-    "build": "yarn clean && tsup",
+    "build": "pnpm run clean && tsup",
     "check": "tsc --noEmit && eslint . && prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -47,7 +47,7 @@
     "format:fix": "prettier --write .",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "prepack": "yarn build"
+    "prepack": "pnpm run build"
   },
   "dependencies": {
     "@simple-photo-gallery/common": "workspace:^",
@@ -71,6 +71,8 @@
     "@types/node": "^24.0.10",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "astro": "^5.11.0",
+    "astro-relative-links": "^0.4.2",
     "eslint": "^9.30.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-import-resolver-alias": "^1.1.2",
@@ -79,8 +81,10 @@
     "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-unicorn": "^59.0.1",
     "fs-extra": "^11.3.0",
+    "globals": "^16.5.0",
     "jest": "^30.0.5",
     "prettier": "^3.4.2",
+    "prettier-plugin-astro": "^0.14.1",
     "ts-jest": "^29.4.1",
     "tsup": "^8.5.0",
     "tsx": "^4.20.3",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,8 +22,7 @@ if (!options.dryRun && !options.version) {
   );
 }
 
-const rootPackageJson = readJson(join(rootDir, "package.json"));
-const packages = sortPackages(loadWorkspacePackages(rootPackageJson));
+const packages = sortPackages(loadWorkspacePackages());
 const archiveDir = mkdtempSync(join(tmpdir(), "simple-photo-gallery-release-"));
 
 if (options.version) {
@@ -45,8 +44,8 @@ for (const pkg of packages) {
     `${pkg.packageJson.name.replace(/^@/, "").replace("/", "-")}-${pkg.packageJson.version}.tgz`,
   );
 
-  run("yarn", [
-    "workspace",
+  run("pnpm", [
+    "--filter",
     pkg.packageJson.name,
     "pack",
     "--out",
@@ -154,18 +153,34 @@ function validatePackageVersions(workspacePackages, expectedVersion) {
   throw new Error(`Package versions do not match the release tag:\n${details}`);
 }
 
-function loadWorkspacePackages(packageJson) {
-  const workspacePatterns = Array.isArray(packageJson.workspaces)
-    ? packageJson.workspaces
-    : packageJson.workspaces?.packages;
+function loadWorkspacePackages() {
+  const workspacePackages = JSON.parse(
+    execFileSync(
+      "pnpm",
+      ["list", "--recursive", "--depth=-1", "--json"],
+      {
+        cwd: rootDir,
+        encoding: "utf8",
+      },
+    ),
+  );
 
-  if (!Array.isArray(workspacePatterns)) {
-    throw new Error("Root package.json does not define workspaces");
+  if (!Array.isArray(workspacePackages)) {
+    throw new Error("pnpm did not return a workspace package list");
   }
 
-  return workspacePatterns
-    .flatMap(expandWorkspacePattern)
-    .map((workspaceDir) => {
+  return workspacePackages
+    .filter(
+      (workspacePackage) =>
+        workspacePackage.path !== rootDir && workspacePackage.private !== true,
+    )
+    .map((workspacePackage) => {
+      const workspaceDir = workspacePackage.path;
+
+      if (typeof workspaceDir !== "string") {
+        throw new Error("pnpm returned a workspace without a path");
+      }
+
       const packageJsonPath = join(workspaceDir, "package.json");
 
       if (!existsSync(packageJsonPath)) {
@@ -176,25 +191,7 @@ function loadWorkspacePackages(packageJson) {
         dir: workspaceDir,
         packageJson: readJson(packageJsonPath),
       };
-    })
-    .filter((pkg) => !pkg.packageJson.private);
-}
-
-function expandWorkspacePattern(pattern) {
-  if (!pattern.includes("*")) {
-    return [resolve(rootDir, pattern)];
-  }
-
-  if (!pattern.endsWith("/*") || pattern.slice(0, -2).includes("*")) {
-    throw new Error(`Unsupported workspace pattern: ${pattern}`);
-  }
-
-  const baseDir = resolve(rootDir, pattern.slice(0, -2));
-
-  return readdirSync(baseDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => join(baseDir, entry.name))
-    .filter((workspaceDir) => existsSync(join(workspaceDir, "package.json")));
+    });
 }
 
 function sortPackages(workspacePackages) {

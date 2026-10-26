@@ -9,7 +9,7 @@ import { copySync } from 'fs-extra';
 
 const fixturePath = path.resolve(process.cwd(), 'tests', 'fixtures', 'single');
 const modernThemePath = path.resolve(process.cwd(), '..', 'themes', 'modern');
-const tsxPath = path.resolve(process.cwd(), '..', 'node_modules', '.bin', 'tsx');
+const tsxPath = path.resolve(process.cwd(), 'node_modules', '.bin', 'tsx');
 const cliPath = path.resolve(process.cwd(), 'src', 'index.ts');
 const MediaFileWithThumbnailSchema = MediaFileSchema.extend({
   thumbnail: ThumbnailSchema,
@@ -17,7 +17,7 @@ const MediaFileWithThumbnailSchema = MediaFileSchema.extend({
 
 function runCliCommand(args: string[]): void {
   execFileSync(tsxPath, [cliPath, ...args], {
-    env: { ...process.env, SPG_TELEMETRY_PROVIDER: 'none' },
+    env: { ...process.env, SPG_TELEMETRY: '0', SPG_TELEMETRY_PROVIDER: 'none' },
     stdio: 'pipe',
   });
 }

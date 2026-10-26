@@ -1,0 +1,11 @@
+packages:
+  - common
+  - gallery
+  - themes/*
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - exifreader
+  - sharp
+  - unrs-resolver

@@ -132,8 +132,7 @@ export async function createGalleryLightbox(options: GalleryLightboxOptions = {}
         onInit: (el: HTMLElement) => {
           (lightbox.pswp as PhotoSwipe | undefined)?.on('change', () => {
             const currSlideElement = (lightbox.pswp as PhotoSwipe | undefined)?.currSlide?.data.element as
-              | HTMLElement
-              | undefined;
+              HTMLElement | undefined;
             if (currSlideElement) {
               const caption = (currSlideElement as HTMLElement).dataset.pswpCaption;
               el.innerHTML = caption || currSlideElement.querySelector('img')?.alt || '';

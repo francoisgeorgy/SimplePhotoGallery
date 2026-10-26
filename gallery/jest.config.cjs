@@ -12,7 +12,7 @@ module.exports = {
     '^@simple-photo-gallery/common/theme$': '<rootDir>/../common/src/theme/index.ts',
     '^@simple-photo-gallery/common/theme/config$': '<rootDir>/../common/src/theme/config.ts',
     // Use the CJS-compatible UMD build of marked, since Jest cannot parse its ESM build
-    '^marked$': '<rootDir>/../node_modules/marked/lib/marked.umd.js',
+    '^marked$': '<rootDir>/../common/node_modules/marked/lib/marked.umd.js',
   },
   transform: {
     '^.+\\.tsx?$': [
@@ -21,7 +21,7 @@ module.exports = {
         useESM: true,
         tsconfig: {
           module: 'ES2022',
-          moduleResolution: 'NodeNext',
+          moduleResolution: 'Bundler',
         },
       },
     ],
