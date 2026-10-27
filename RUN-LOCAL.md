@@ -1,18 +1,10 @@
-# Run a Local Fork
+# Build and Use Your Local Version
 
-Use these instructions when you want the `spg` command to run this local fork instead of downloading `simple-photo-gallery` from the npm registry.
+This guide makes the `spg` command use your local Simple Photo Gallery checkout instead of the version published to the npm registry.
 
-## Prerequisites
+## 1. Install Dependencies
 
-- Node.js 20 or newer
-- Corepack enabled
-- This repository cloned locally
-
-The repository pins pnpm 10.12.4 in its root `package.json`.
-
-## Initial Setup
-
-Run the setup commands from the repository root:
+Open a terminal in the repository root:
 
 ```bash
 cd /path/to/SimplePhotoGallery
@@ -20,97 +12,70 @@ corepack enable
 pnpm install --frozen-lockfile
 ```
 
-Build the shared package first, followed by the CLI package:
+If pnpm asks whether it may remove and reinstall the existing `node_modules` directories, answer `Y`. It only replaces installed dependencies and does not remove your source code.
+
+## 2. Build the Local App
+
+Still in the repository root, build the shared code first and the app second:
 
 ```bash
 pnpm --filter @simple-photo-gallery/common build
 pnpm --filter simple-photo-gallery build
 ```
 
-## Understanding `--filter`
+The compiled local app is written to `gallery/dist/`.
 
-This repository is a pnpm workspace containing several packages. The `--filter` option selects a local workspace package by the `name` in its `package.json` and runs a command in that package.
+## 3. Make the Local `spg` Command Available
 
-For example:
-
-```bash
-pnpm --filter @simple-photo-gallery/common build
-```
-
-This selects the local package in `common/` and runs its `build` script. It is approximately equivalent to:
-
-```bash
-cd common
-pnpm build
-```
-
-Similarly:
-
-```bash
-pnpm --filter simple-photo-gallery build
-```
-
-selects the local CLI package in `gallery/`. These commands do not download either package from the registry.
-
-Filters are resolved from the current pnpm workspace. Run filtered commands from the repository root, or provide the repository explicitly when running them elsewhere:
-
-```bash
-pnpm --dir /path/to/SimplePhotoGallery \
-    --filter simple-photo-gallery build
-```
-
-## Link the Local CLI Globally
-
-After building the CLI, create a global link:
-
-```bash
-pnpm --dir gallery link --global
-```
-
-The `gallery/package.json` file exposes two executable names:
-
-```text
-simple-photo-gallery
-spg
-```
-
-The link makes both commands available through pnpm's global executable directory while keeping the package itself in this repository.
-
-Conceptually, command resolution becomes:
-
-```text
-spg
-  -> pnpm global executable directory
-  -> local gallery package
-  -> gallery/dist/index.js
-```
-
-Linking does not publish the fork, download the registry version, or copy the repository. It creates a filesystem link back to the local `gallery/` directory.
-
-You can inspect pnpm's global executable directory with:
+First, check that pnpm has a global command directory:
 
 ```bash
 pnpm bin --global
 ```
 
-Verify the linked command with:
+If this reports `ERR_PNPM_NO_GLOBAL_BIN_DIR`, configure it with:
+
+```bash
+pnpm setup
+```
+
+If setup reports `ERR_PNPM_BAD_SHELL_SECTION` because an old or commented pnpm section already exists in your shell configuration, replace that section with:
+
+```bash
+pnpm setup --force
+```
+
+Close and reopen your terminal so the updated `PATH` takes effect. Return to the repository root and confirm that `pnpm bin --global` now prints a directory.
+
+Create a global command that points to the local build:
+
+```bash
+cd /path/to/SimplePhotoGallery/gallery
+pnpm link --global
+```
+
+Run the link command from inside `gallery/`. Using `pnpm --dir gallery link --global` from the repository root links the workspace package instead of the CLI package.
+
+This does not publish or copy the app. It makes the global `spg` command point to this repository's `gallery/dist/index.js` file.
+
+Verify that the command is available:
 
 ```bash
 command -v spg
 spg --version
 ```
 
-## Run the Fork from a Photo Folder
+## 4. Use the Local App
 
-Once linked, change to any photo folder and run `spg` normally:
+Change to the folder containing your photos and run `spg`:
 
 ```bash
-cd /path/to/photos
+cd /path/to/your/photos
 spg init
 spg build
 ```
 
-The shell finds `spg` through pnpm's global executable directory. The CLI still uses the photo folder as its current working directory, so it creates the gallery there:
+The generated gallery is created in the photo folder:
 
 ```text
 photos/
@@ -122,46 +87,51 @@ photos/
     └── images/
 ```
 
-The global link affects command discovery only. It does not change where gallery files are created.
+Do not use `pnpm dlx simple-photo-gallery` for this workflow. That command downloads the published registry version instead of running your local checkout.
 
-## Rebuild After Making Changes
+## Rebuild After Changing the Code
 
-The linked command runs `gallery/dist/index.js`, not the TypeScript files in `gallery/src/`. Rebuild after editing the CLI:
+After editing files under `gallery/`, rebuild the app:
 
 ```bash
 cd /path/to/SimplePhotoGallery
 pnpm --filter simple-photo-gallery build
 ```
 
-If you change the shared `common` package, rebuild both packages in dependency order:
+After editing files under `common/`, rebuild both packages:
 
 ```bash
+cd /path/to/SimplePhotoGallery
 pnpm --filter @simple-photo-gallery/common build
 pnpm --filter simple-photo-gallery build
 ```
 
-The existing global link immediately uses the rebuilt files. You do not need to link the package again.
+You only need to create the global link once. The linked `spg` command automatically uses the newly built files.
 
-## Run Without a Global Link
+## What `--filter` Means
 
-After building, you can invoke the local compiled CLI directly from a photo folder:
+This repository contains multiple packages. `--filter` selects which local package should run the command:
 
 ```bash
-cd /path/to/photos
-node /path/to/SimplePhotoGallery/gallery/dist/index.js init
-node /path/to/SimplePhotoGallery/gallery/dist/index.js build
+pnpm --filter simple-photo-gallery build
 ```
 
-This uses the local fork and preserves the photo folder as the current working directory.
+The command above means: run the `build` script from the local `gallery/package.json`. Run filtered commands from the repository root.
 
-Do not use `pnpm dlx simple-photo-gallery@latest` when testing the fork. `pnpm dlx` resolves the published package from the registry rather than this local workspace.
+## If `spg` Is Not Found
 
-## Moving or Removing the Fork
-
-The global link points to the current location of the repository. Moving or deleting the repository breaks the command. After moving it, build and link the package again from its new location.
-
-To remove the global command registration without deleting the fork:
+Confirm that pnpm's global command directory exists:
 
 ```bash
-pnpm remove --global simple-photo-gallery
+pnpm bin --global
+```
+
+If the command reports `ERR_PNPM_NO_GLOBAL_BIN_DIR`, run `pnpm setup` and restart your terminal. If setup reports `ERR_PNPM_BAD_SHELL_SECTION` for an obsolete pnpm section, run `pnpm setup --force`. Otherwise, confirm that the printed directory is included in your shell's `PATH`, then run `spg --version` again.
+
+If pnpm warns that `@simple-photo-gallery/workspace` has no binaries, remove the incorrect link and link again from inside `gallery/`:
+
+```bash
+pnpm remove --global @simple-photo-gallery/workspace
+cd /path/to/SimplePhotoGallery/gallery
+pnpm link --global
 ```

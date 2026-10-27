@@ -30,11 +30,11 @@ const validImages = section.images.filter(
 <style>
   .gallery-section {
     padding: 1rem 1rem;
-    background-color: var(--section-bg-color-odd, var(--section-bg-color, #ffffff));
+    background-color: var(--section-bg-color-odd, var(--section-bg-color, var(--color-surface)));
   }
 
   .gallery-section:nth-child(even) {
-    background-color: var(--section-bg-color-even, var(--section-bg-color, #f9fafb));
+    background-color: var(--section-bg-color-even, var(--section-bg-color, var(--color-surface-alt)));
   }
 
   /* Opt-in embed mode: transparent backgrounds for iframe embedding */

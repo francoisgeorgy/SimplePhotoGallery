@@ -40,7 +40,7 @@ const { title, subGalleries } = Astro.props;
 <style>
   .sub-galleries {
     padding: 5rem 1rem;
-    background-color: #f9fafb;
+    background-color: var(--color-surface-alt);
   }
 
   .sub-galleries__header {
@@ -52,12 +52,12 @@ const { title, subGalleries } = Astro.props;
     font-size: clamp(2.5rem, 5vw, 5rem);
     font-weight: 700;
     margin-bottom: 1.5rem;
-    color: #111827;
+    color: var(--color-text);
   }
 
   .sub-galleries__header-description {
     font-size: 1.125rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
     max-width: 42rem;
     margin: 0 auto;
     line-height: 1.6;
@@ -79,7 +79,7 @@ const { title, subGalleries } = Astro.props;
     overflow: hidden;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
-    background-color: white;
+    background-color: #333333;
   }
 
   .sub-galleries__item:hover {
@@ -111,7 +111,7 @@ const { title, subGalleries } = Astro.props;
   .sub-galleries__item-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-text);
     margin: 0;
     line-height: 1.4;
   }
