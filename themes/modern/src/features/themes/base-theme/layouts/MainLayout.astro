@@ -11,17 +11,25 @@ interface Props {
   metadata?: GalleryMetadata;
   analyticsScript?: string;
   heroSrcsets: ResolvedHero['srcsets'];
+  preloadHero?: boolean;
   thumbnails?: Required<ThumbnailConfig>;
 }
 
-const { title, description, metadata, url, analyticsScript, heroSrcsets, thumbnails } = Astro.props;
+const { title, description, metadata, url, analyticsScript, heroSrcsets, preloadHero = true, thumbnails } = Astro.props;
 
 const rowHeightMax = thumbnails?.size ?? 160;
 ---
 
 <!doctype html>
 <html lang={metadata?.language || 'en'}>
-  <MainHead title={title} description={description} metadata={metadata} url={url} heroSrcsets={heroSrcsets} />
+  <MainHead
+    title={title}
+    description={description}
+    metadata={metadata}
+    url={url}
+    heroSrcsets={heroSrcsets}
+    preloadHero={preloadHero}
+  />
   <body style={`--row-height-max: ${rowHeightMax}px`}>
     <slot />
 

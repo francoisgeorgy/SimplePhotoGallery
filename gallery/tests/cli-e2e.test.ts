@@ -284,6 +284,39 @@ describe('CLI e2e user workflows', () => {
     expect(secondHtml).not.toContain('undefined');
   });
 
+  test('uses subgalleries as the homepage when the root contains no media', () => {
+    const galleryDir = makeTempDir('subgallery-homepage');
+    const childDir = path.join(galleryDir, '2011-2016');
+    copySingleFixture(childDir);
+
+    runSourceCli(['init', '--photos', galleryDir, '--recursive', '--default']);
+
+    const rootGalleryData = readGalleryData(galleryDir);
+    rootGalleryData.subGalleries.title = 'Collections';
+    rootGalleryData.subGalleries.description = 'A **curated** archive.';
+    rootGalleryData.subGalleries.galleries[0].title = 'Photographs 2011–2016';
+    writeFileSync(path.join(galleryDir, 'gallery', 'gallery.json'), `${JSON.stringify(rootGalleryData, null, 2)}\n`, 'utf8');
+
+    runSourceCli(['thumbnails', '--gallery', galleryDir, '--recursive']);
+    runSourceCli(['build', '--gallery', galleryDir, '--recursive', '--theme', modernThemePath, '--no-thumbnails']);
+
+    const rootHtml = readHtml(galleryDir);
+    expect(rootHtml).toContain('<h1 class="sub-galleries__header-title"');
+    expect(rootHtml).toContain('>Collections</h1>');
+    expect(rootHtml).toContain('A <strong>curated</strong> archive.');
+    expect(rootHtml).toContain('href="2011-2016"');
+    expect(rootHtml).toContain('>Photographs 2011–2016</h3>');
+    expect(rootHtml).not.toContain('<section class="hero"');
+    expect(rootHtml).not.toContain('<section class="gallery-section');
+    expect(rootHtml).not.toContain('class="home-navigation"');
+
+    const childHtml = readHtml(childDir);
+    expect(childHtml).toContain('<section class="hero"');
+    expect(childHtml).toContain('class="home-navigation"');
+    expect(childHtml).toContain('class="home-navigation__link" href="../"');
+    expect(childHtml).toContain('My Gallery</span>');
+  });
+
   test('build scans new files by default, respects --no-scan, and prunes missing files', () => {
     const galleryDir = makeTempDir('scan-prune');
     copySingleFixture(galleryDir);

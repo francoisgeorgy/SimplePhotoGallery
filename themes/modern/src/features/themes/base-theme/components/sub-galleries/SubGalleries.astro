@@ -5,10 +5,12 @@ import type { ResolvedSubGallery } from '@simple-photo-gallery/common/theme';
 
 interface Props {
   title?: string;
+  parsedDescription?: string;
   subGalleries: ResolvedSubGallery[];
+  isHomepage?: boolean;
 }
 
-const { title, subGalleries } = Astro.props;
+const { title, parsedDescription, subGalleries, isHomepage = false } = Astro.props;
 ---
 
 <section class="sub-galleries">
@@ -16,7 +18,14 @@ const { title, subGalleries } = Astro.props;
     {
       title && (
         <div class="sub-galleries__header">
-          <h2 class="sub-galleries__header-title">{title}</h2>
+          {isHomepage ? (
+            <h1 class="sub-galleries__header-title">{title}</h1>
+          ) : (
+            <h2 class="sub-galleries__header-title">{title}</h2>
+          )}
+          {parsedDescription && (
+            <div class="sub-galleries__header-description markdown-content" set:html={parsedDescription} />
+          )}
         </div>
       )
     }

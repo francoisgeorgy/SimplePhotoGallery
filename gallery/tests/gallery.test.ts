@@ -239,9 +239,9 @@ describe('Single-folder gallery', () => {
         box: jest.fn(),
         prompt: jest
           .fn()
+          .mockResolvedValueOnce('https://www.mygallery.com') // base URL
           .mockResolvedValueOnce('My Custom Gallery') // title
           .mockResolvedValueOnce('Custom gallery description') // description
-          .mockResolvedValueOnce('https://www.mygallery.com') // url
           .mockResolvedValueOnce('img_1.jpg'), // headerImage
       };
 
@@ -262,6 +262,7 @@ describe('Single-folder gallery', () => {
       // Verify custom settings were applied
       expect(validatedData.title).toBe('My Custom Gallery');
       expect(validatedData.description).toBe('Custom gallery description');
+      expect(validatedData.url).toBe('https://www.mygallery.com/');
       expect(validatedData.headerImage).toBe('img_1.jpg');
     });
   });
@@ -306,6 +307,127 @@ describe('Multi-folder gallery', () => {
   });
 
   describe('init command with recursive option', () => {
+    test('should prompt for homepage settings when the root contains only subgalleries', async () => {
+      const homepageTestPath = path.resolve(testDir, 'tests', 'fixtures', 'test', 'subgallery-homepage');
+      const childPath = path.join(homepageTestPath, '2011-2016');
+
+      if (existsSync(homepageTestPath)) {
+        rmSync(homepageTestPath, { recursive: true, force: true });
+      }
+      copySync(singleFixturePath, childPath);
+
+      const mockUI = {
+        info: jest.fn(),
+        start: jest.fn(),
+        success: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+        box: jest.fn(),
+        prompt: jest
+          .fn()
+          .mockResolvedValueOnce('https://photos.example.com') // base URL
+          .mockResolvedValueOnce('2011–2016') // child title
+          .mockResolvedValueOnce('Archive photographs') // child description
+          .mockResolvedValueOnce('img_1.jpg') // child header image
+          .mockResolvedValueOnce('Photographs') // homepage title
+          .mockResolvedValueOnce('A **curated** archive.'), // optional homepage description
+      };
+
+      try {
+        await init(
+          {
+            photos: homepageTestPath,
+            recursive: true,
+            default: false,
+            force: false,
+          },
+          mockUI as unknown as ConsolaInstance,
+        );
+
+        const homepageData = validateGalleryStructure(path.join(homepageTestPath, 'gallery'), 0, 1);
+        expect(homepageData.title).toBe('Photographs');
+        expect(homepageData.description).toBe('A **curated** archive.');
+        expect(homepageData.headerImage).toBe('');
+        expect(homepageData.url).toBe('https://photos.example.com/');
+        expect(homepageData.subGalleries.title).toBe('Photographs');
+        expect(homepageData.subGalleries.description).toBe('A **curated** archive.');
+        expect(homepageData.subGalleries.galleries[0].title).toBe('2011–2016');
+        expect(homepageData.navigation).toBeUndefined();
+
+        const childData = validateGalleryStructure(path.join(childPath, 'gallery'), 3, 0);
+        expect(childData.url).toBe('https://photos.example.com/2011-2016/');
+        expect(childData.navigation?.home).toEqual({
+          label: 'Photographs',
+          path: '../',
+        });
+        expect(mockUI.prompt).toHaveBeenCalledTimes(6);
+        expect(mockUI.prompt).toHaveBeenNthCalledWith(2, '[sub-gallery: 2011-2016] Enter gallery title', {
+          type: 'text',
+          default: 'My Gallery',
+          placeholder: 'My Gallery',
+        });
+        expect(mockUI.prompt).toHaveBeenNthCalledWith(5, '[root: subgallery-homepage] Enter homepage title', {
+          type: 'text',
+          default: 'My Gallery',
+          placeholder: 'My Gallery',
+        });
+        expect(mockUI.prompt).toHaveBeenNthCalledWith(
+          6,
+          '[root: subgallery-homepage] Enter homepage description (optional)',
+          {
+            type: 'text',
+            default: '',
+            placeholder: '',
+          },
+        );
+      } finally {
+        rmSync(homepageTestPath, { recursive: true, force: true });
+      }
+    });
+
+    test('should point nested galleries back to the root gallery', async () => {
+      const nestedTestPath = path.resolve(testDir, 'tests', 'fixtures', 'test', 'nested-navigation');
+      const groupPath = path.join(nestedTestPath, 'trips');
+      const childPath = path.join(groupPath, 'italy');
+
+      if (existsSync(nestedTestPath)) {
+        rmSync(nestedTestPath, { recursive: true, force: true });
+      }
+      copySync(singleFixturePath, childPath);
+
+      const mockUI = {
+        info: jest.fn(),
+        start: jest.fn(),
+        success: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+        box: jest.fn(),
+        prompt: jest.fn(),
+      };
+
+      try {
+        await init(
+          {
+            photos: nestedTestPath,
+            recursive: true,
+            default: true,
+            force: false,
+          },
+          mockUI as unknown as ConsolaInstance,
+        );
+
+        const rootData = validateGalleryStructure(path.join(nestedTestPath, 'gallery'), 0, 1);
+        const groupData = validateGalleryStructure(path.join(groupPath, 'gallery'), 0, 1);
+        const childData = validateGalleryStructure(path.join(childPath, 'gallery'), 3, 0);
+
+        expect(rootData.navigation).toBeUndefined();
+        expect(groupData.navigation?.home).toEqual({ label: 'My Gallery', path: '../' });
+        expect(childData.navigation?.home).toEqual({ label: 'My Gallery', path: '../../' });
+      } finally {
+        rmSync(nestedTestPath, { recursive: true, force: true });
+      }
+    });
+
     test('should create gallery.json files with subgalleries for multi-folder structure', () => {
       // Run init command with recursive option and default settings
       runCliCommand(`${tsxPath} ${cliPath} init --photos ${multiTestPath} -r -d`);
@@ -322,11 +444,13 @@ describe('Multi-folder gallery', () => {
 
       // Validate first subgallery (2 images)
       const firstGalleryPath = path.resolve(multiTestPath, 'first', 'gallery');
-      validateGalleryStructure(firstGalleryPath, 2, 0);
+      const firstGalleryData = validateGalleryStructure(firstGalleryPath, 2, 0);
+      expect(firstGalleryData.title).toBe('First');
 
       // Validate second subgallery (2 images)
       const secondGalleryPath = path.resolve(multiTestPath, 'second', 'gallery');
-      validateGalleryStructure(secondGalleryPath, 2, 0);
+      const secondGalleryData = validateGalleryStructure(secondGalleryPath, 2, 0);
+      expect(secondGalleryData.title).toBe('Second');
     });
 
     test('should create gallery.json files with custom settings in interactive mode', async () => {
@@ -342,7 +466,7 @@ describe('Multi-folder gallery', () => {
       }
 
       // Create a mock UI that provides predefined responses for each gallery
-      // Main gallery, First subgallery, Second subgallery (4 prompts each)
+      // One base URL, then three settings for each gallery
       const mockUI = {
         info: jest.fn(),
         start: jest.fn(),
@@ -352,20 +476,18 @@ describe('Multi-folder gallery', () => {
         box: jest.fn(),
         prompt: jest
           .fn()
+          .mockResolvedValueOnce('https://photos.example.com/') // base URL
           // First subgallery prompts (processed first)
           .mockResolvedValueOnce('First Sub Gallery') // title
           .mockResolvedValueOnce('First sub description') // description
-          .mockResolvedValueOnce('') // url
           .mockResolvedValueOnce('img_4.jpg') // headerImage
           // Second subgallery prompts (processed second)
           .mockResolvedValueOnce('Second Sub Gallery') // title
           .mockResolvedValueOnce('Second sub description') // description
-          .mockResolvedValueOnce('') // url
           .mockResolvedValueOnce('img_6.jpg') // headerImage
           // Main gallery prompts (processed last)
           .mockResolvedValueOnce('Multi Gallery Main') // title
           .mockResolvedValueOnce('Main gallery description') // description
-          .mockResolvedValueOnce('') // url
           .mockResolvedValueOnce('img_1.jpg'), // headerImage
       };
 
@@ -384,18 +506,21 @@ describe('Multi-folder gallery', () => {
       const mainValidatedData = validateGalleryStructure(mainGalleryPath, 3, 2);
       expect(mainValidatedData.title).toBe('Multi Gallery Main');
       expect(mainValidatedData.description).toBe('Main gallery description');
+      expect(mainValidatedData.url).toBe('https://photos.example.com/');
       expect(mainValidatedData.headerImage).toBe('img_1.jpg');
 
       // Validate first subgallery with custom settings
       const firstValidatedData = validateGalleryStructure(firstGalleryPath, 2, 0);
       expect(firstValidatedData.title).toBe('First Sub Gallery');
       expect(firstValidatedData.description).toBe('First sub description');
+      expect(firstValidatedData.url).toBe('https://photos.example.com/first/');
       expect(firstValidatedData.headerImage).toBe('img_4.jpg');
 
       // Validate second subgallery with custom settings
       const secondValidatedData = validateGalleryStructure(secondGalleryPath, 2, 0);
       expect(secondValidatedData.title).toBe('Second Sub Gallery');
       expect(secondValidatedData.description).toBe('Second sub description');
+      expect(secondValidatedData.url).toBe('https://photos.example.com/second/');
       expect(secondValidatedData.headerImage).toBe('img_6.jpg');
     });
   });
@@ -500,9 +625,9 @@ describe('Separate gallery directory', () => {
         box: jest.fn(),
         prompt: jest
           .fn()
+          .mockResolvedValueOnce('') // base URL
           .mockResolvedValueOnce('Separate Gallery Custom') // title
           .mockResolvedValueOnce('Custom separate gallery description') // description
-          .mockResolvedValueOnce('') // url
           .mockResolvedValueOnce('img_2.jpg'), // headerImage
       };
 

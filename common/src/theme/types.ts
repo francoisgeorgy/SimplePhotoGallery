@@ -54,6 +54,12 @@ export interface ResolvedSubGallery {
   resolvedPath?: string;
 }
 
+/** Link from a sub-gallery back to the root gallery. */
+export interface ResolvedHomeNavigation {
+  label: string;
+  path: string;
+}
+
 /** Fully resolved gallery data ready for rendering */
 export interface ResolvedGalleryData {
   title: string;
@@ -63,8 +69,13 @@ export interface ResolvedGalleryData {
   ctaBanner?: boolean;
   hero: ResolvedHero;
   sections: ResolvedSection[];
+  navigation?: {
+    home?: ResolvedHomeNavigation;
+  };
   subGalleries?: {
     title: string;
+    description?: string;
+    parsedDescription: string;
     galleries: ResolvedSubGallery[];
   };
   // Pass through base URLs for components that need them

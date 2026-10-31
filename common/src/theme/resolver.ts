@@ -201,6 +201,8 @@ export async function resolveGalleryData(
   const resolvedSubGalleries = subGalleries?.galleries?.length
     ? {
         title: subGalleries.title,
+        description: subGalleries.description,
+        parsedDescription: subGalleries.description ? await renderMarkdown(subGalleries.description) : '',
         galleries: subGalleries.galleries.map((sg) => resolveSubGallery(sg, galleryJsonPath, thumbnails.format)),
       }
     : undefined;
@@ -213,6 +215,7 @@ export async function resolveGalleryData(
     ctaBanner: gallery.ctaBanner,
     hero,
     sections,
+    navigation: gallery.navigation,
     subGalleries: resolvedSubGalleries,
     mediaBaseUrl,
     thumbsBaseUrl,

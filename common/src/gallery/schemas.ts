@@ -138,8 +138,22 @@ export const GalleryDataSchema = z.looseObject({
   analyticsScript: z.string().optional(),
   ctaBanner: z.boolean().optional(),
   customStyles: z.record(z.string(), z.string()).optional(),
+  navigation: z
+    .looseObject({
+      home: z
+        .looseObject({
+          label: z.string(),
+          path: z.string(),
+        })
+        .optional(),
+    })
+    .optional(),
   sections: z.array(GallerySectionSchema),
-  subGalleries: z.looseObject({ title: z.string(), galleries: z.array(SubGallerySchema) }),
+  subGalleries: z.looseObject({
+    title: z.string(),
+    description: z.string().optional(),
+    galleries: z.array(SubGallerySchema),
+  }),
 });
 
 /**
@@ -155,6 +169,20 @@ export const GalleryDataDeprecatedSchema = z.looseObject({
   metadata: GalleryMetadataSchema,
   mediaBaseUrl: z.string().optional(),
   analyticsScript: z.string().optional(),
+  navigation: z
+    .looseObject({
+      home: z
+        .looseObject({
+          label: z.string(),
+          path: z.string(),
+        })
+        .optional(),
+    })
+    .optional(),
   sections: z.array(GallerySectionDeprecatedSchema),
-  subGalleries: z.looseObject({ title: z.string(), galleries: z.array(SubGallerySchema) }),
+  subGalleries: z.looseObject({
+    title: z.string(),
+    description: z.string().optional(),
+    galleries: z.array(SubGallerySchema),
+  }),
 });

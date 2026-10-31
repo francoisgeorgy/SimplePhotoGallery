@@ -8,14 +8,17 @@ spg init [options]
 
 ## How it works
 
-This command initializes a new gallery by scanning a folder (and optionally its subfolders) for images and videos. The command will prompt you to enter:
+This command initializes a new gallery by scanning a folder (and optionally its subfolders) for images and videos. In interactive mode, the command first asks for the base publication URL. It then prompts for these settings for each gallery:
 
 - Gallery title
 - Gallery description
 - Header image (selected from your photos)
-- URL where the gallery will be hosted
 
-All of these settings can later be edited in the `gallery.json` file.
+The top-level gallery uses the base URL directly. Sub-gallery URLs are generated automatically from their relative directories. For example, the folder `2011-2016` receives `https://photos.example.com/2011-2016/` when the base URL is `https://photos.example.com/`. All settings can later be edited in the corresponding `gallery.json` file.
+
+If a gallery contains only sub-galleries and no media of its own, the script asks for a homepage title and an optional homepage description instead of asking for an empty header image. These values are displayed above the sub-gallery grid.
+
+Every interactive question includes its directory context, such as `[root: photos]` or `[sub-gallery: trips/italy]`, so recursive initialization always makes it clear which gallery is being configured.
 
 > **Note:** The URL is important if you want the automatically generated social media images to work correctly, as it needs to be an absolute URL.
 
@@ -100,6 +103,10 @@ spg init -r
 The command will recursively scan all subdirectories of the photos folder and create a separate gallery for each subdirectory. This has the same effect as running the command multiple times with the `-p` flag set to each subdirectory.
 
 What the recursive option does in addition is create links between the galleries, and sub-galleries will appear as links in each folder's gallery. This way, you can navigate between the galleries and sub-galleries.
+
+The publication base URL is requested once before any gallery-specific prompts. Every recursive gallery URL is then derived from its directory path, including nested subdirectories.
+
+After recursive initialization, every child `gallery.json` also receives a relative home link. Its label uses the root gallery title, while its path is calculated from the child's nesting depth. The root gallery does not receive a home link.
 
 > **Note:** If you have a lot of subdirectories, you might want to use the `-d` or `--default` flag to skip the interactive prompts.
 

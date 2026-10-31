@@ -8,9 +8,10 @@ interface Props {
   url?: string;
   metadata?: GalleryMetadata;
   heroSrcsets: ResolvedHero['srcsets'];
+  preloadHero?: boolean;
 }
 
-const { title, description, url, metadata, heroSrcsets } = Astro.props;
+const { title, description, url, metadata, heroSrcsets, preloadHero = true } = Astro.props;
 
 // Use pre-computed srcsets from the resolver
 const portraitAvifSrcset = heroSrcsets.portraitAvif;
@@ -98,7 +99,7 @@ const metadataImageHeight = metadata?.imageHeight === undefined ? '631' : String
     rel="stylesheet"
   />
   {
-    portraitPreloadSrcset && (
+    preloadHero && portraitPreloadSrcset && (
       <link
         rel="preload"
         as="image"
@@ -111,7 +112,7 @@ const metadataImageHeight = metadata?.imageHeight === undefined ? '631' : String
     )
   }
   {
-    landscapePreloadSrcset && (
+    preloadHero && landscapePreloadSrcset && (
       <link
         rel="preload"
         as="image"

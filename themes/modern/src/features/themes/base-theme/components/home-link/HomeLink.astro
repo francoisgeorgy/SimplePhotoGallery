@@ -1,0 +1,56 @@
+---
+import type { ResolvedHomeNavigation } from '@simple-photo-gallery/common/theme';
+
+interface Props {
+  home: ResolvedHomeNavigation;
+}
+
+const { home } = Astro.props;
+---
+
+<nav class="home-navigation" aria-label="Gallery navigation">
+  <a class="home-navigation__link" href={home.path}>
+    <span class="home-navigation__arrow" aria-hidden="true">←</span>
+    <span>{home.label}</span>
+  </a>
+</nav>
+
+<style>
+  .home-navigation {
+    position: absolute;
+    top: max(1rem, env(safe-area-inset-top));
+    left: max(1rem, env(safe-area-inset-left));
+    z-index: 20;
+  }
+
+  .home-navigation__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.9rem;
+    color: #ffffff;
+    background-color: rgba(20, 20, 20, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1;
+    backdrop-filter: blur(8px);
+    transition: background-color 0.2s ease;
+  }
+
+  .home-navigation__link:hover {
+    background-color: rgba(20, 20, 20, 0.9);
+  }
+
+  .home-navigation__link:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 3px;
+  }
+
+  .home-navigation__arrow {
+    font-size: 1.2rem;
+    font-weight: 400;
+  }
+</style>

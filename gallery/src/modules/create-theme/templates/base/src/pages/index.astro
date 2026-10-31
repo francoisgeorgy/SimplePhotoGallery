@@ -7,6 +7,7 @@ import CtaBanner from '@/components/cta/CtaBanner.astro';
 import Footer from '@/components/footer/Footer.astro';
 import GallerySection from '@/components/gallery-section/GallerySection.astro';
 import Hero from '@/components/hero/Hero.astro';
+import HomeLink from '@/components/home-link/HomeLink.astro';
 import PhotoSwipe from '@/components/lightbox/PhotoSwipe.astro';
 import SubGalleries from '@/components/sub-galleries/SubGalleries.astro';
 import MainLayout from '@/layouts/MainLayout.astro';
@@ -23,6 +24,8 @@ const themeConfig = loadThemeConfig(themePath);
 const gallery = await resolveGalleryData(raw, { galleryJsonPath, themeConfig });
 
 const showCtaBanner = gallery.ctaBanner === true;
+const hasGalleryImages = gallery.sections.some((section) => section.images.length > 0);
+const isSubGalleryHomepage = !hasGalleryImages && Boolean(gallery.subGalleries && gallery.subGalleries.galleries.length > 0);
 ---
 
 <script>
@@ -44,15 +47,25 @@ const showCtaBanner = gallery.ctaBanner === true;
   url={gallery.url}
   analyticsScript={gallery.analyticsScript}
   heroSrcsets={gallery.hero.srcsets}
+  preloadHero={!isSubGalleryHomepage}
   thumbnails={gallery.thumbnails}>
-  <Hero hero={gallery.hero} />
+  {gallery.navigation?.home && <HomeLink home={gallery.navigation.home} />}
+  {!isSubGalleryHomepage && <Hero hero={gallery.hero} />}
 
   {
     gallery.subGalleries && gallery.subGalleries.galleries.length > 0 && (
-      <SubGalleries title={gallery.subGalleries.title} subGalleries={gallery.subGalleries.galleries} />
+      <SubGalleries
+        title={gallery.subGalleries.title}
+        parsedDescription={gallery.subGalleries.parsedDescription}
+        subGalleries={gallery.subGalleries.galleries}
+        isHomepage={isSubGalleryHomepage}
+      />
     )
   }
-  {gallery.sections.map((section, sectionIndex) => <GallerySection section={section} sectionIndex={sectionIndex} />)}
+  {
+    hasGalleryImages &&
+      gallery.sections.map((section, sectionIndex) => <GallerySection section={section} sectionIndex={sectionIndex} />)
+  }
 
   {showCtaBanner && <CtaBanner />}
 

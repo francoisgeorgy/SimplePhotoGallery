@@ -212,6 +212,35 @@ Sub-galleries are links to other galleries, typically located in subdirectories 
 
 Sub-galleries are generated automatically when you initialize the gallery in the top-level folder with the `-r` or `--recursive` flag. After that, you can edit the `subGalleries` attribute in the `gallery.json` file if you want to use different titles or images for the links.
 
+When the top-level gallery contains no media of its own, the sub-gallery list becomes the homepage. The hero and empty gallery sections are omitted, and `subGalleries.title` is rendered as the page's main heading. Change that value to customize the visible homepage title:
+
+```json
+"subGalleries": {
+    "title": "Collections",
+    "description": "A **curated** archive.",
+    "galleries": []
+}
+```
+
+The optional description supports Markdown. During interactive recursive initialization, the homepage title and description are requested automatically when a gallery directory contains only sub-galleries.
+
+Galleries that contain their own media keep the normal hero and display sub-galleries as a secondary section.
+
+### Home navigation
+
+Recursive initialization adds a home link to every child gallery:
+
+```json
+"navigation": {
+    "home": {
+        "label": "Photographs",
+        "path": "../"
+    }
+}
+```
+
+The modern theme displays this link in the upper-left corner. Nested galleries receive paths such as `../../`, so the link works both in local previews and after static deployment. The root gallery has no `navigation.home` entry.
+
 ## Captions
 
 When displaying photos and videos in full screen, you can show captions at the bottom. The captions are automatically extracted from the EXIF data of the photos if you used a tool to add them. If not, you can add them manually in the `gallery.json` file using the `alt` attribute of each image or video.

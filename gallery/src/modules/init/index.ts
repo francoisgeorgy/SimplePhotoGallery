@@ -2,15 +2,15 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-import { toUrlPath } from '@simple-photo-gallery/common/theme';
+import { joinUrl, toUrlPath } from '@simple-photo-gallery/common/theme';
 
 import { capitalizeTitle, getMediaFileType } from './utils';
 
-import { shouldSkipDirectory } from '../../utils';
+import { findGalleries, shouldSkipDirectory } from '../../utils';
 
 import type { GallerySettingsFromUser, ProcessDirectoryResult, ScanDirectoryResult, ScanOptions, SubGallery } from './types';
 import type { CommandResultSummary } from '../telemetry/types';
-import type { MediaFile } from '@simple-photo-gallery/common';
+import type { GalleryData, MediaFile } from '@simple-photo-gallery/common';
 import type { ConsolaInstance } from 'consola';
 
 /**
@@ -65,30 +65,30 @@ export async function scanDirectory(dirPath: string, ui: ConsolaInstance): Promi
 
 /**
  * Prompts the user for gallery settings through interactive CLI
- * @param galleryName - Name of the gallery directory
+ * @param galleryContext - Human-readable directory context shown in prompts
  * @param defaultImage - Default header image path
  * @param ui - ConsolaInstance for prompting and logging
  * @returns Promise resolving to user-provided gallery settings
  */
 async function getGallerySettingsFromUser(
-  galleryName: string,
+  galleryContext: string,
   defaultImage: string,
+  galleryUrl: string,
   ui: ConsolaInstance,
 ): Promise<GallerySettingsFromUser> {
-  ui.info(`Enter gallery settings for the gallery in folder "${galleryName}"`);
+  ui.info(`Configuring ${galleryContext}`);
 
-  const title = await ui.prompt('Enter gallery title', { type: 'text', default: 'My Gallery', placeholder: 'My Gallery' });
-  const description = await ui.prompt('Enter gallery description', {
+  const title = await ui.prompt(`[${galleryContext}] Enter gallery title`, {
+    type: 'text',
+    default: 'My Gallery',
+    placeholder: 'My Gallery',
+  });
+  const description = await ui.prompt(`[${galleryContext}] Enter gallery description`, {
     type: 'text',
     default: 'My gallery with fantastic photos.',
     placeholder: 'My gallery with fantastic photos.',
   });
-  const url = await ui.prompt('Enter the URL where the gallery will be hosted (important for social media image)', {
-    type: 'text',
-    default: '',
-    placeholder: '',
-  });
-  const headerImage = await ui.prompt('Enter the name of the header image', {
+  const headerImage = await ui.prompt(`[${galleryContext}] Enter the name of the header image`, {
     type: 'text',
     default: defaultImage,
     placeholder: defaultImage,
@@ -97,13 +97,51 @@ async function getGallerySettingsFromUser(
   return {
     title,
     description,
-    url,
+    url: galleryUrl,
     headerImage,
     thumbnails: {
       size: '',
       edge: undefined,
     },
   };
+}
+
+/**
+ * Prompts for the content shown when a gallery contains only sub-galleries.
+ */
+async function getHomepageSettingsFromUser(
+  galleryContext: string,
+  galleryUrl: string,
+  ui: ConsolaInstance,
+): Promise<{ title: string; description: string; url: string }> {
+  ui.info(`Configuring homepage for ${galleryContext}`);
+
+  const title = await ui.prompt(`[${galleryContext}] Enter homepage title`, {
+    type: 'text',
+    default: 'My Gallery',
+    placeholder: 'My Gallery',
+  });
+  const description = await ui.prompt(`[${galleryContext}] Enter homepage description (optional)`, {
+    type: 'text',
+    default: '',
+    placeholder: '',
+  });
+
+  return { title, description, url: galleryUrl };
+}
+
+/**
+ * Builds a gallery URL from the publication base URL and the gallery's relative directory.
+ * @param baseUrl - Root URL entered once during initialization
+ * @param relativeGalleryPath - Gallery directory relative to the initialized root
+ * @returns URL with a trailing slash, or an empty string when no base URL was entered
+ */
+function getGalleryUrl(baseUrl: string, relativeGalleryPath: string): string {
+  if (!baseUrl) {
+    return '';
+  }
+
+  return `${joinUrl(baseUrl, toUrlPath(relativeGalleryPath))}/`;
 }
 
 /** CLI options for theme and thumbnail configuration */
@@ -119,22 +157,30 @@ interface InitConfigOptions {
  * @param galleryJsonPath - Path where gallery.json should be created
  * @param scanPath - Path to the directory that was scanned
  * @param subGalleries - Array of sub-galleries to include
+ * @param galleryUrl - Computed publication URL for this gallery
+ * @param galleryContext - Human-readable directory context shown in prompts
+ * @param defaultTitle - Title used when prompts are skipped
  * @param useDefaultSettings - Whether to use default settings or prompt user
  * @param ctaBanner - Whether to add a Simple Photo Gallery call-to-action banner
  * @param configOptions - CLI options for theme and thumbnail configuration
  * @param ui - ConsolaInstance for prompting and logging
+ * @returns The gallery data written to disk
  */
 async function createGalleryJson(
   mediaFiles: MediaFile[],
   galleryJsonPath: string,
   scanPath: string,
   subGalleries: SubGallery[] = [],
+  galleryUrl: string,
+  galleryContext: string,
+  defaultTitle: string,
   useDefaultSettings: boolean,
   ctaBanner: boolean | undefined,
   configOptions: InitConfigOptions,
   ui: ConsolaInstance,
-): Promise<void> {
+): Promise<GalleryData> {
   const galleryDir = path.dirname(galleryJsonPath);
+  const isSubGalleryHomepage = mediaFiles.length === 0 && subGalleries.length > 0;
 
   // If the gallery is stored in the same location as the media files, use a relative base path, otherwise use an absolute path
   const isSameLocation = path.relative(scanPath, path.join(galleryDir, '..')) === '';
@@ -155,8 +201,8 @@ async function createGalleryJson(
     thumbnailsConfig.edge = configOptions.thumbnailEdge;
   }
 
-  let galleryData = {
-    title: 'My Gallery',
+  let galleryData: GalleryData = {
+    title: defaultTitle,
     description: 'My gallery with fantastic photos.',
     headerImage: mediaFiles[0]?.filename || '',
     mediaBasePath: mediaBasePath,
@@ -171,30 +217,46 @@ async function createGalleryJson(
       },
     ],
     subGalleries: {
-      title: 'Sub Galleries',
+      title: isSubGalleryHomepage ? defaultTitle : 'Sub Galleries',
       galleries: relativeSubGalleries,
     },
     ...(ctaBanner !== undefined && { ctaBanner }),
   };
 
   if (!useDefaultSettings) {
-    const userSettings = await getGallerySettingsFromUser(
-      path.basename(path.join(galleryDir, '..')),
-      path.basename(mediaFiles[0]?.filename || ''),
-      ui,
-    );
+    if (isSubGalleryHomepage) {
+      const homepageSettings = await getHomepageSettingsFromUser(galleryContext, galleryUrl, ui);
 
-    // Extract thumbnail settings (no longer prompted, but structure preserved for compatibility)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { thumbnails, ...otherSettings } = userSettings;
+      galleryData = {
+        ...galleryData,
+        ...homepageSettings,
+        subGalleries: {
+          ...galleryData.subGalleries,
+          title: homepageSettings.title,
+          ...(homepageSettings.description && { description: homepageSettings.description }),
+        },
+      };
+    } else {
+      const userSettings = await getGallerySettingsFromUser(
+        galleryContext,
+        path.basename(mediaFiles[0]?.filename || ''),
+        galleryUrl,
+        ui,
+      );
 
-    galleryData = {
-      ...galleryData,
-      ...otherSettings,
-    };
+      // Extract thumbnail settings (no longer prompted, but structure preserved for compatibility)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { thumbnails, ...otherSettings } = userSettings;
+
+      galleryData = {
+        ...galleryData,
+        ...otherSettings,
+      };
+    }
   }
 
   await fs.writeFile(galleryJsonPath, JSON.stringify(galleryData, null, 2));
+  return galleryData;
 }
 
 /**
@@ -215,9 +277,45 @@ async function galleryExists(outputPath: string): Promise<boolean> {
 }
 
 /**
+ * Adds a relative link back to the root gallery to every generated child gallery.
+ * @param outputPath - Root directory containing the generated gallery tree
+ */
+async function addHomeNavigation(outputPath: string): Promise<void> {
+  if (!(await galleryExists(outputPath))) {
+    return;
+  }
+
+  const rootGalleryJsonPath = path.join(outputPath, 'gallery', 'gallery.json');
+  const rootGalleryData = JSON.parse(await fs.readFile(rootGalleryJsonPath, 'utf8')) as GalleryData;
+  const homeLabel = rootGalleryData.title || 'Home';
+
+  for (const galleryDir of findGalleries(outputPath, true)) {
+    const relativeHomePath = path.relative(galleryDir, outputPath);
+    if (!relativeHomePath) {
+      continue;
+    }
+
+    const galleryJsonPath = path.join(galleryDir, 'gallery', 'gallery.json');
+    const galleryData = JSON.parse(await fs.readFile(galleryJsonPath, 'utf8')) as GalleryData;
+
+    galleryData.navigation = {
+      ...galleryData.navigation,
+      home: {
+        label: homeLabel,
+        path: `${toUrlPath(relativeHomePath)}/`,
+      },
+    };
+
+    await fs.writeFile(galleryJsonPath, JSON.stringify(galleryData, null, 2));
+  }
+}
+
+/**
  * Processes a directory and its subdirectories to create galleries
  * @param scanPath - Path to scan for media files
  * @param outputPath - Path where gallery should be created
+ * @param relativeGalleryPath - Gallery directory relative to the initialized root
+ * @param baseUrl - Root publication URL shared by all galleries
  * @param recursive - Whether to process subdirectories recursively
  * @param useDefaultSettings - Whether to use default settings or prompt user
  * @param force - Whether to force override existing galleries without prompting
@@ -229,6 +327,8 @@ async function galleryExists(outputPath: string): Promise<boolean> {
 async function processDirectory(
   scanPath: string,
   outputPath: string,
+  relativeGalleryPath: string,
+  baseUrl: string,
   recursive: boolean,
   useDefaultSettings: boolean,
   force: boolean,
@@ -242,6 +342,7 @@ async function processDirectory(
   let totalGalleries = 0;
   const subGalleries: SubGallery[] = [];
   let createdCurrentGallery = false;
+  let createdGalleryTitle: string | undefined;
 
   // Scan current directory for media files
   const { mediaFiles, subGalleryDirectories } = await scanDirectory(scanPath, ui);
@@ -253,6 +354,8 @@ async function processDirectory(
       const result = await processDirectory(
         subGalleryDir,
         path.join(outputPath, path.basename(subGalleryDir)),
+        path.join(relativeGalleryPath, path.basename(subGalleryDir)),
+        baseUrl,
         recursive,
         useDefaultSettings,
         force,
@@ -300,12 +403,20 @@ async function processDirectory(
       // Create output directory
       await fs.mkdir(galleryPath, { recursive: true });
 
+      const galleryContext = relativeGalleryPath
+        ? `sub-gallery: ${toUrlPath(relativeGalleryPath)}`
+        : `root: ${path.basename(scanPath)}`;
+      const defaultTitle = relativeGalleryPath ? capitalizeTitle(path.basename(scanPath)) : 'My Gallery';
+
       // Create gallery.json for this directory
-      await createGalleryJson(
+      const galleryData = await createGalleryJson(
         mediaFiles,
         galleryJsonPath,
         scanPath,
         subGalleries,
+        getGalleryUrl(baseUrl, relativeGalleryPath),
+        galleryContext,
+        defaultTitle,
         useDefaultSettings,
         ctaBanner,
         configOptions,
@@ -313,6 +424,7 @@ async function processDirectory(
       );
 
       createdCurrentGallery = true;
+      createdGalleryTitle = galleryData.title;
       totalGalleries += 1;
 
       ui.success(
@@ -331,7 +443,7 @@ async function processDirectory(
   if (createdCurrentGallery) {
     const dirName = path.basename(scanPath);
     result.subGallery = {
-      title: capitalizeTitle(dirName),
+      title: createdGalleryTitle || capitalizeTitle(dirName),
       headerImage: mediaFiles[0]?.filename || '',
       path: `../${dirName}`,
     };
@@ -349,6 +461,13 @@ export async function init(options: ScanOptions, ui: ConsolaInstance): Promise<C
   try {
     const scanPath = path.resolve(options.photos);
     const outputPath = options.gallery ? path.resolve(options.gallery) : scanPath;
+    const baseUrl = options.default
+      ? ''
+      : await ui.prompt(`Enter the base URL for gallery root "${scanPath}" (important for social media images)`, {
+          type: 'text',
+          default: '',
+          placeholder: '',
+        });
 
     // Extract CLI config options for theme and thumbnails
     const configOptions: InitConfigOptions = {
@@ -361,6 +480,8 @@ export async function init(options: ScanOptions, ui: ConsolaInstance): Promise<C
     const result = await processDirectory(
       scanPath,
       outputPath,
+      '',
+      baseUrl,
       options.recursive,
       options.default,
       options.force,
@@ -368,6 +489,8 @@ export async function init(options: ScanOptions, ui: ConsolaInstance): Promise<C
       configOptions,
       ui,
     );
+
+    await addHomeNavigation(outputPath);
 
     ui.box(
       `Created ${result.totalGalleries} ${result.totalGalleries === 1 ? 'gallery' : 'galleries'} with ${result.totalFiles} media ${result.totalFiles === 1 ? 'file' : 'files'}`,
