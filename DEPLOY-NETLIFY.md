@@ -47,6 +47,8 @@ netlify login
 
 ### 2. Create the Netlify site
 
+**TO BE DONE FROM THE GALLERY DIR**
+
 ```bash
 netlify sites:create --name francoisgeorgy-photos
 ```
