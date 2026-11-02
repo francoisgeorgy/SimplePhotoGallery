@@ -19,6 +19,7 @@ For the fastest way to get started, install the `simple-photo-gallery` package g
 ```bash
 npm install -g simple-photo-gallery@latest
 spg init
+# spg init --config struct-francoisgeorgy-ch.txt --force
 spg build
 ```
 

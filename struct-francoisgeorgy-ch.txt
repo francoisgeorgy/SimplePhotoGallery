@@ -1,0 +1,14 @@
+base folder : /Volumes/Photos/publish/
+title : Photographs
+description : A curated collection of photographs by François Georgy
+url : https://photos.francoisgeorgy.ch/
+
+albums (folder name : album name : album description):
+after-hours : After Hours : Ville, crépuscule, nuit, lumières artificielles
+against-the-light : Against the Light : Contre-jours, silhouettes, coucher de soleil
+in_motion : In Motion : Flou intentionnel, bougé, longues expositions
+monochrome : Monochrome : Sélection de photographies noir et blanc
+lines-and-forms : Lines & Forms : Architecture, géométrie, perspectives
+urban-canvas : Urban Canvas : Graffiti et street art
+natural-world : Natural World : Nature et paysages
+urban-fragments : Urban Fragments : Scènes de rue, détails et ambiances urbaines

@@ -49,6 +49,9 @@ After that, the command will create a `gallery` folder and a `gallery.json` file
 # Create gallery in current folder
 spg init
 
+# With a predefined config 
+spg init --config struct-francoisgeorgy-ch.txt --force
+
 # Scan specific folder
 spg init -p /path/to/photos
 
