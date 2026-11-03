@@ -18,6 +18,8 @@ export interface BuildOptions {
   thumbnails: boolean;
   /** Answer yes to build confirmations */
   yes: boolean;
+  /** Whether to include Cloudflare Web Analytics script */
+  cloudflare?: boolean;
   /** Theme package name to use for building (e.g., '@simple-photo-gallery/theme-modern' or '@your-org/your-private-theme') */
   theme?: string;
   /** Override thumbnail size in pixels */

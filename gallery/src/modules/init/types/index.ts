@@ -9,6 +9,8 @@ export interface ScanOptions {
   photos: string;
   /** Optional path to the directory where the gallery will be initialized */
   gallery?: string;
+  /** Optional path to a text config file for non-interactive gallery initialization */
+  config?: string;
   /** Whether to recursively create galleries from all photo subdirectories */
   recursive: boolean;
   /** Whether to use default gallery settings instead of prompting user */
@@ -17,12 +19,40 @@ export interface ScanOptions {
   force: boolean;
   /** Whether to add a Simple Photo Gallery call-to-action banner */
   ctaBanner?: boolean;
+  /** Whether to include Cloudflare Web Analytics script */
+  cloudflare?: boolean;
   /** Theme package name or local path to store in gallery.json */
   theme?: string;
   /** Thumbnail size in pixels to store in gallery.json */
   thumbnailSize?: number;
   /** How thumbnail size should be applied: 'auto', 'width', or 'height' */
   thumbnailEdge?: 'auto' | 'width' | 'height';
+}
+
+/** Configured album metadata from init text config file */
+export interface InitConfigAlbum {
+  /** Folder name or relative path of the album */
+  folder: string;
+  /** Title of the album gallery */
+  title: string;
+  /** Description of the album gallery */
+  description: string;
+}
+
+/** Parsed init configuration file */
+export interface InitConfigFile {
+  /** Base folder path where photos are stored */
+  baseFolder?: string;
+  /** Root gallery title */
+  title?: string;
+  /** Root gallery description */
+  description?: string;
+  /** Root base URL */
+  url?: string;
+  /** Whether to include Cloudflare Web Analytics script */
+  cloudflare?: boolean;
+  /** Map of normalized relative album folder paths to album configurations */
+  albums: Record<string, InitConfigAlbum>;
 }
 
 /** Metadata for a sub-gallery */
