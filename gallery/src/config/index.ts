@@ -12,3 +12,7 @@ export const HEADER_IMAGE_LANDSCAPE_WIDTHS = [3840, 2560, 1920, 1280, 960, 640];
 
 /** Set of supported header image portrait widths */
 export const HEADER_IMAGE_PORTRAIT_WIDTHS = [1080, 720, 480, 360];
+
+/** Cloudflare Web Analytics JS snippet */
+export const CLOUDFLARE_ANALYTICS_SCRIPT =
+  "<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{\"token\": \"1206394fc0414cff98bf51764690aeda\"}'></script><!-- End Cloudflare Web Analytics -->";

@@ -317,6 +317,52 @@ describe('CLI e2e user workflows', () => {
     expect(childHtml).toContain('My Gallery</span>');
   });
 
+  test('initializes galleries non-interactively using --config', () => {
+    const galleryDir = makeTempDir('config-init');
+    const childDir1 = path.join(galleryDir, 'after-hours');
+    const childDir2 = path.join(galleryDir, 'monochrome');
+    copySingleFixture(childDir1);
+    copySingleFixture(childDir2);
+
+    const configFile = path.join(galleryDir, 'gallery-config.txt');
+    writeFileSync(
+      configFile,
+      [
+        `base folder : ${galleryDir}`,
+        'title : Curated Photographs',
+        'description : A curated collection of photographs',
+        'url : https://photos.example.com/',
+        '',
+        'albums (folder name : album name : album description):',
+        'after-hours : After Hours : Night photographs',
+        'monochrome : Monochrome : Black and white photos',
+      ].join('\n'),
+      'utf8',
+    );
+
+    runSourceCli(['init', '--config', configFile]);
+
+    const rootData = readGalleryData(galleryDir);
+    expect(rootData.title).toBe('Curated Photographs');
+    expect(rootData.description).toBe('A curated collection of photographs');
+    expect(rootData.url).toBe('https://photos.example.com/');
+    expect(rootData.subGalleries.galleries.map((g) => g.title)).toEqual(
+      expect.arrayContaining(['After Hours', 'Monochrome']),
+    );
+
+    const child1Data = readGalleryData(childDir1);
+    expect(child1Data.title).toBe('After Hours');
+    expect(child1Data.description).toBe('Night photographs');
+    expect(child1Data.url).toBe('https://photos.example.com/after-hours/');
+    expect(child1Data.navigation?.home?.label).toBe('Curated Photographs');
+
+    const child2Data = readGalleryData(childDir2);
+    expect(child2Data.title).toBe('Monochrome');
+    expect(child2Data.description).toBe('Black and white photos');
+    expect(child2Data.url).toBe('https://photos.example.com/monochrome/');
+    expect(child2Data.navigation?.home?.label).toBe('Curated Photographs');
+  });
+
   test('build scans new files by default, respects --no-scan, and prunes missing files', () => {
     const galleryDir = makeTempDir('scan-prune');
     copySingleFixture(galleryDir);
@@ -451,6 +497,7 @@ describe('CLI help, telemetry, and validation', () => {
     const initHelp = runSourceCli(['init', '--help']).stdout;
     expect(initHelp).toContain('--photos');
     expect(initHelp).toContain('--gallery');
+    expect(initHelp).toContain('--config');
     expect(initHelp).toContain('--default');
 
     const buildHelp = runSourceCli(['build', '--help']).stdout;

@@ -158,10 +158,12 @@ program
     '-g, --gallery <path>',
     'Path to the directory where the gallery will be initialized. Default: same directory as the photos folder',
   )
+  .option('--config <path>', 'Path to a text config file for non-interactive gallery initialization')
   .option('-r, --recursive', 'Recursively create galleries from all photos subdirectories', false)
   .option('-d, --default', 'Use default gallery settings instead of asking the user', false)
   .option('-f, --force', 'Force override existing galleries without asking', false)
   .option('--cta-banner', 'Add a Simple Photo Gallery call-to-action banner to the end of the gallery', false)
+  .option('--cloudflare', 'Include Cloudflare Web Analytics script in the gallery HTML pages', false)
   .option('--theme <package|path>', 'Theme package name or local path to store in gallery.json')
   .option('--thumbnail-size <pixels>', 'Thumbnail size in pixels to store in gallery.json', Number.parseInt)
   .option('--thumbnail-edge <mode>', 'How thumbnail size is applied: auto, width, or height')
@@ -190,6 +192,7 @@ program
   .option('--no-scan', 'Do not scan for new photos when building the gallery', true)
   .option('--prune', 'Remove gallery entries whose source files are missing when scanning', false)
   .option('-y, --yes', 'Answer yes to build confirmations, including copying photos from mediaBasePath', false)
+  .option('--cloudflare', 'Include Cloudflare Web Analytics script in the gallery HTML pages', false)
   .option(
     '--theme <package|path>',
     'Theme package name (e.g., @simple-photo-gallery/theme-modern) or local path (e.g., ./themes/my-theme)',

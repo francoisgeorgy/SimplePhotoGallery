@@ -72,7 +72,8 @@ Change to the folder containing your photos and run `spg`:
 ```bash
 cd /path/to/your/photos
 spg init
-# spg init --config struct-francoisgeorgy-ch.txt --force 
+# spg init --config conf/francoisgeorgy-ch.txt
+# spg init --config conf/francoisgeorgy-ch.txt --force
 spg build
 ```
 

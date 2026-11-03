@@ -41,6 +41,7 @@ You can specify the theme to use for your gallery by setting the `theme` field i
 ```
 
 The theme can be specified as:
+
 - An npm package name (e.g., `@simple-photo-gallery/theme-modern`)
 - A local path (e.g., `./themes/my-custom-theme`)
 
@@ -484,9 +485,23 @@ This configuration omits portrait variants entirely, which is useful when your h
 
 ## Analytics script
 
-You can add custom analytics scripts (such as Google Analytics, Plausible, or other tracking services) to your gallery by including an `analyticsScript` field in your `gallery.json` file. The script will be embedded at the end of the HTML body tag.
+You can add custom analytics scripts (such as Google Analytics, Plausible, Cloudflare Web Analytics, or other tracking services) to your gallery by including an `analyticsScript` field in your `gallery.json` file. The script will be embedded at the end of the HTML body tag.
 
-### Example
+### Cloudflare Web Analytics
+
+You can easily enable Cloudflare Web Analytics directly via the CLI or config file without manually editing `gallery.json`:
+
+```bash
+# Enable during init
+spg init --cloudflare
+
+# Or enable during build
+spg build --cloudflare
+```
+
+You can also specify `cloudflare : true` in your text config file when using `spg init --config <file>`. By default, the Cloudflare script is not added.
+
+### Custom Script Example
 
 ```json
 {

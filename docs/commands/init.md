@@ -28,20 +28,22 @@ After that, the command will create a `gallery` folder and a `gallery.json` file
 
 ## Options
 
-| Option                        | Description                                                | Default               |
-| ----------------------------- | ---------------------------------------------------------- | --------------------- |
-| `-p, --photos <path>`         | Path to folder containing photos                           | Current directory     |
-| `-g, --gallery <path>`        | Where to create the gallery                                | Same as photos folder |
-| `-r, --recursive`             | Create galleries from subdirectories                       | `false`               |
-| `-d, --default`               | Use default settings (skip prompts)                        | `false`               |
-| `-f, --force`                 | Force override existing galleries without asking           | `false`               |
-| `--cta-banner`                | Add a Simple Photo Gallery CTA banner to the gallery       | `false`               |
-| `--theme <package\|path>`     | Theme to store in gallery.json                             | None                  |
-| `--thumbnail-size <pixels>`   | Thumbnail size in pixels to store in gallery.json          | Theme/default (300)   |
-| `--thumbnail-edge <mode>`     | Size application mode: auto, width, or height              | Theme/default (auto)  |
-| `-v, --verbose`               | Show detailed output                                       |                       |
-| `-q, --quiet`                 | Only show warnings/errors                                  |                       |
-| `-h, --help`                  | Show command help                                          |                       |
+| Option                      | Description                                                           | Default               |
+| --------------------------- | --------------------------------------------------------------------- | --------------------- |
+| `-p, --photos <path>`       | Path to folder containing photos                                      | Current directory     |
+| `-g, --gallery <path>`      | Where to create the gallery                                           | Same as photos folder |
+| `--config <path>`           | Path to a text config file for non-interactive gallery initialization | None                  |
+| `-r, --recursive`           | Create galleries from subdirectories                                  | `false`               |
+| `-d, --default`             | Use default settings (skip prompts)                                   | `false`               |
+| `-f, --force`               | Force override existing galleries without asking                      | `false`               |
+| `--cta-banner`              | Add a Simple Photo Gallery CTA banner to the gallery                  | `false`               |
+| `--cloudflare`              | Include Cloudflare Web Analytics script in the gallery HTML pages     | `false`               |
+| `--theme <package\|path>`   | Theme to store in gallery.json                                        | None                  |
+| `--thumbnail-size <pixels>` | Thumbnail size in pixels to store in gallery.json                     | Theme/default (300)   |
+| `--thumbnail-edge <mode>`   | Size application mode: auto, width, or height                         | Theme/default (auto)  |
+| `-v, --verbose`             | Show detailed output                                                  |                       |
+| `-q, --quiet`               | Only show warnings/errors                                             |                       |
+| `-h, --help`                | Show command help                                                     |                       |
 
 ## Examples
 
@@ -49,8 +51,11 @@ After that, the command will create a `gallery` folder and a `gallery.json` file
 # Create gallery in current folder
 spg init
 
-# With a predefined config 
-spg init --config struct-francoisgeorgy-ch.txt --force
+# With a predefined config file
+spg init --config conf/francoisgeorgy-ch.txt
+
+# Overwrite existing galleries from config
+spg init --config conf/francoisgeorgy-ch.txt --force
 
 # Scan specific folder
 spg init -p /path/to/photos
@@ -75,7 +80,59 @@ spg init --theme @simple-photo-gallery/theme-modern --thumbnail-size 400
 
 # Initialize with custom thumbnail edge mode
 spg init --thumbnail-size 300 --thumbnail-edge height
+
+# Initialize with Cloudflare Web Analytics enabled
+spg init --cloudflare
 ```
+
+## Initialize from a config file
+
+You can initialize a recursive gallery without prompts using a text config file:
+
+```bash
+spg init --config conf/francoisgeorgy-ch.txt
+```
+
+Use `--force` only if you want to overwrite existing generated gallery files:
+
+```bash
+spg init --config conf/francoisgeorgy-ch.txt --force
+```
+
+Example config:
+
+```text
+base folder : /Volumes/Photos/publish/
+title : Photographs
+description : A curated collection of photographs
+url : https://photos.example.com/
+
+albums (folder name : album name : album description):
+after-hours : After Hours : Ville, crépuscule, nuit, lumières artificielles
+monochrome : Monochrome : Sélection de photographies noir et blanc
+```
+
+### Directory and album handling behavior
+
+When `spg init --config <file>` runs against a target directory, it processes the folder hierarchy according to the following rules:
+
+1. **Configured album folders (defined in config and present on disk):**
+   - The CLI scans each matching subfolder for media files (images and videos).
+   - The album's `gallery.json` is generated directly with its configured `title` and `description`, bypassing all interactive prompts.
+   - Sub-gallery URLs are derived from the root `url` (e.g., `https://photos.example.com/after-hours/`), and a `navigation.home` link pointing back to the root gallery is added with the root gallery's title.
+   - In the root gallery's `gallery.json`, the `subGalleries.galleries` collection uses the configured title rather than an inferred folder name.
+
+2. **Unconfigured subfolders (present on disk but not in config):**
+   - Any subfolder containing media that is not explicitly listed in the config is still processed and included as a sub-gallery so that no media files are omitted.
+   - Its gallery title is automatically formatted from its folder name (e.g., `summer-trip` becomes `Summer Trip`), and it receives the standard default description.
+
+3. **Configured albums not present on disk:**
+   - If an album is defined in the config file but the folder does not exist on disk (or contains no media files), the initialization continues smoothly without error.
+   - Non-existent or empty directories are omitted from the generated gallery tree to prevent broken navigation or empty pages.
+
+4. **Existing gallery metadata (`gallery.json`):**
+   - **Without `--force`:** If a `gallery/gallery.json` file already exists, execution halts with a safe error in non-interactive environments (or prompts for confirmation in interactive terminals) to prevent accidental loss of customized metadata.
+   - **With `--force` (`-f`):** All existing `gallery.json` files are overwritten with the fresh configuration non-interactively.
 
 ## Creating the gallery in a folder other than the photos folder
 

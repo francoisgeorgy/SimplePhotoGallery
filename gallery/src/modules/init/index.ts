@@ -4,11 +4,19 @@ import process from 'node:process';
 
 import { joinUrl, toUrlPath } from '@simple-photo-gallery/common/theme';
 
-import { capitalizeTitle, getMediaFileType } from './utils';
+import { capitalizeTitle, getMediaFileType, loadInitConfig, normalizeAlbumPath } from './utils';
 
+import { CLOUDFLARE_ANALYTICS_SCRIPT } from '../../config';
 import { findGalleries, shouldSkipDirectory } from '../../utils';
 
-import type { GallerySettingsFromUser, ProcessDirectoryResult, ScanDirectoryResult, ScanOptions, SubGallery } from './types';
+import type {
+  GallerySettingsFromUser,
+  InitConfigFile,
+  ProcessDirectoryResult,
+  ScanDirectoryResult,
+  ScanOptions,
+  SubGallery,
+} from './types';
 import type { CommandResultSummary } from '../telemetry/types';
 import type { GalleryData, MediaFile } from '@simple-photo-gallery/common';
 import type { ConsolaInstance } from 'consola';
@@ -162,7 +170,10 @@ interface InitConfigOptions {
  * @param defaultTitle - Title used when prompts are skipped
  * @param useDefaultSettings - Whether to use default settings or prompt user
  * @param ctaBanner - Whether to add a Simple Photo Gallery call-to-action banner
+ * @param cloudflare - Whether to include Cloudflare Web Analytics script
  * @param configOptions - CLI options for theme and thumbnail configuration
+ * @param relativeGalleryPath - Gallery directory relative to the initialized root
+ * @param initConfig - Optional parsed init configuration file
  * @param ui - ConsolaInstance for prompting and logging
  * @returns The gallery data written to disk
  */
@@ -176,7 +187,10 @@ async function createGalleryJson(
   defaultTitle: string,
   useDefaultSettings: boolean,
   ctaBanner: boolean | undefined,
+  cloudflare: boolean | undefined,
   configOptions: InitConfigOptions,
+  relativeGalleryPath: string,
+  initConfig: InitConfigFile | undefined,
   ui: ConsolaInstance,
 ): Promise<GalleryData> {
   const galleryDir = path.dirname(galleryJsonPath);
@@ -201,12 +215,34 @@ async function createGalleryJson(
     thumbnailsConfig.edge = configOptions.thumbnailEdge;
   }
 
+  let initialTitle = defaultTitle;
+  let initialDescription = 'My gallery with fantastic photos.';
+
+  if (initConfig) {
+    if (relativeGalleryPath) {
+      const normalizedPath = normalizeAlbumPath(relativeGalleryPath);
+      const album = initConfig.albums[normalizedPath];
+      if (album) {
+        initialTitle = album.title;
+        initialDescription = album.description;
+      }
+    } else {
+      if (initConfig.title) {
+        initialTitle = initConfig.title;
+      }
+      if (initConfig.description) {
+        initialDescription = initConfig.description;
+      }
+    }
+  }
+
   let galleryData: GalleryData = {
-    title: defaultTitle,
-    description: 'My gallery with fantastic photos.',
+    title: initialTitle,
+    description: initialDescription,
     headerImage: mediaFiles[0]?.filename || '',
     mediaBasePath: mediaBasePath,
     metadata: {},
+    ...(galleryUrl && { url: galleryUrl }),
     // Include theme if provided via CLI
     ...(configOptions.theme && { theme: configOptions.theme }),
     // Include thumbnails if any values were set via CLI
@@ -217,10 +253,12 @@ async function createGalleryJson(
       },
     ],
     subGalleries: {
-      title: isSubGalleryHomepage ? defaultTitle : 'Sub Galleries',
+      title: isSubGalleryHomepage ? initialTitle : 'Sub Galleries',
+      ...(isSubGalleryHomepage && initConfig?.description && { description: initConfig.description }),
       galleries: relativeSubGalleries,
     },
     ...(ctaBanner !== undefined && { ctaBanner }),
+    ...((cloudflare || initConfig?.cloudflare) && { analyticsScript: CLOUDFLARE_ANALYTICS_SCRIPT }),
   };
 
   if (!useDefaultSettings) {
@@ -320,7 +358,9 @@ async function addHomeNavigation(outputPath: string): Promise<void> {
  * @param useDefaultSettings - Whether to use default settings or prompt user
  * @param force - Whether to force override existing galleries without prompting
  * @param ctaBanner - Whether to add a Simple Photo Gallery call-to-action banner
+ * @param cloudflare - Whether to include Cloudflare Web Analytics script
  * @param configOptions - CLI options for theme and thumbnail configuration
+ * @param initConfig - Optional parsed init configuration file
  * @param ui - ConsolaInstance for logging
  * @returns Promise resolving to processing results
  */
@@ -333,7 +373,9 @@ async function processDirectory(
   useDefaultSettings: boolean,
   force: boolean,
   ctaBanner: boolean | undefined,
+  cloudflare: boolean | undefined,
   configOptions: InitConfigOptions,
+  initConfig: InitConfigFile | undefined,
   ui: ConsolaInstance,
 ): Promise<ProcessDirectoryResult> {
   ui.start(`Scanning ${scanPath}`);
@@ -360,7 +402,9 @@ async function processDirectory(
         useDefaultSettings,
         force,
         ctaBanner,
+        cloudflare,
         configOptions,
+        initConfig,
         ui,
       );
 
@@ -419,7 +463,10 @@ async function processDirectory(
         defaultTitle,
         useDefaultSettings,
         ctaBanner,
+        cloudflare,
         configOptions,
+        relativeGalleryPath,
+        initConfig,
         ui,
       );
 
@@ -459,15 +506,28 @@ async function processDirectory(
  */
 export async function init(options: ScanOptions, ui: ConsolaInstance): Promise<CommandResultSummary> {
   try {
-    const scanPath = path.resolve(options.photos);
+    let initConfig: InitConfigFile | undefined;
+    if (options.config) {
+      const configPath = path.resolve(options.config);
+      initConfig = await loadInitConfig(configPath);
+      ui.info(`Loaded init config from ${configPath}`);
+    }
+
+    const scanPath = path.resolve(initConfig?.baseFolder ?? options.photos);
     const outputPath = options.gallery ? path.resolve(options.gallery) : scanPath;
-    const baseUrl = options.default
-      ? ''
-      : await ui.prompt(`Enter the base URL for gallery root "${scanPath}" (important for social media images)`, {
-          type: 'text',
-          default: '',
-          placeholder: '',
-        });
+    const recursive = initConfig ? true : options.recursive;
+    const useDefaultSettings = initConfig ? true : options.default;
+
+    let baseUrl = '';
+    if (initConfig) {
+      baseUrl = initConfig.url ?? '';
+    } else if (!options.default) {
+      baseUrl = await ui.prompt(`Enter the base URL for gallery root "${scanPath}" (important for social media images)`, {
+        type: 'text',
+        default: '',
+        placeholder: '',
+      });
+    }
 
     // Extract CLI config options for theme and thumbnails
     const configOptions: InitConfigOptions = {
@@ -482,11 +542,13 @@ export async function init(options: ScanOptions, ui: ConsolaInstance): Promise<C
       outputPath,
       '',
       baseUrl,
-      options.recursive,
-      options.default,
+      recursive,
+      useDefaultSettings,
       options.force,
       options.ctaBanner,
+      options.cloudflare,
       configOptions,
+      initConfig,
       ui,
     );
 

@@ -14,6 +14,7 @@ import {
   hasOldHeaderImages,
 } from './utils';
 
+import { CLOUDFLARE_ANALYTICS_SCRIPT } from '../../config';
 import { buildCliThumbnailConfig, findGalleries } from '../../utils';
 import { parseGalleryJson, writeGalleryJsonAtomic } from '../../utils/gallery';
 import { scanDirectory } from '../init';
@@ -232,6 +233,7 @@ function runAstroBuild(templateDir: string, galleryJsonPath: string, outputDir: 
  * @param thumbsBaseUrl - Optional base URL for hosting thumbnails
  * @param cliThumbnailConfig - Optional CLI overrides for thumbnail configuration
  * @param cliTheme - Optional CLI theme identifier to save to gallery.json
+ * @param cloudflare - Optional CLI flag to enable Cloudflare Web Analytics script
  */
 async function buildGallery(
   galleryDir: string,
@@ -245,6 +247,7 @@ async function buildGallery(
   thumbsBaseUrl?: string,
   cliThumbnailConfig?: ThumbnailConfig,
   cliTheme?: string,
+  cloudflare?: boolean,
 ): Promise<void> {
   ui.start(`Building gallery ${galleryDir}`);
 
@@ -358,6 +361,13 @@ async function buildGallery(
   if (cliTheme && galleryData.theme !== cliTheme) {
     ui.debug('Updating gallery.json with theme');
     galleryData.theme = cliTheme;
+    markDirty();
+  }
+
+  // If cloudflare analytics is requested via CLI, update the gallery.json file if needed
+  if (cloudflare && galleryData.analyticsScript !== CLOUDFLARE_ANALYTICS_SCRIPT) {
+    ui.debug('Updating gallery.json with Cloudflare Web Analytics script');
+    galleryData.analyticsScript = CLOUDFLARE_ANALYTICS_SCRIPT;
     markDirty();
   }
 
@@ -522,6 +532,7 @@ export async function build(options: BuildOptions, ui: ConsolaInstance): Promise
         thumbsBaseUrl,
         cliThumbnailConfig,
         options.theme,
+        options.cloudflare,
       );
 
       ++totalGalleries;
