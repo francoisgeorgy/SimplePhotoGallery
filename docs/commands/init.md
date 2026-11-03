@@ -52,10 +52,10 @@ After that, the command will create a `gallery` folder and a `gallery.json` file
 spg init
 
 # With a predefined config file
-spg init --config struct-francoisgeorgy-ch.txt
+spg init --config conf/francoisgeorgy-ch.txt
 
 # Overwrite existing galleries from config
-spg init --config struct-francoisgeorgy-ch.txt --force
+spg init --config conf/francoisgeorgy-ch.txt --force
 
 # Scan specific folder
 spg init -p /path/to/photos
@@ -90,13 +90,13 @@ spg init --cloudflare
 You can initialize a recursive gallery without prompts using a text config file:
 
 ```bash
-spg init --config struct-francoisgeorgy-ch.txt
+spg init --config conf/francoisgeorgy-ch.txt
 ```
 
 Use `--force` only if you want to overwrite existing generated gallery files:
 
 ```bash
-spg init --config struct-francoisgeorgy-ch.txt --force
+spg init --config conf/francoisgeorgy-ch.txt --force
 ```
 
 Example config:

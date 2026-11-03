@@ -32,10 +32,10 @@ describe('normalizeAlbumPath', () => {
 });
 
 describe('parseInitConfig & loadInitConfig', () => {
-  test('parses struct-francoisgeorgy-ch.txt accurately', async () => {
-    const configPath = fs.existsSync(path.resolve(process.cwd(), 'struct-francoisgeorgy-ch.txt'))
-      ? path.resolve(process.cwd(), 'struct-francoisgeorgy-ch.txt')
-      : path.resolve(process.cwd(), '..', 'struct-francoisgeorgy-ch.txt');
+  test('parses conf/francoisgeorgy-ch.txt accurately', async () => {
+    const configPath = fs.existsSync(path.resolve(process.cwd(), 'conf', 'francoisgeorgy-ch.txt'))
+      ? path.resolve(process.cwd(), 'conf', 'francoisgeorgy-ch.txt')
+      : path.resolve(process.cwd(), '..', 'conf', 'francoisgeorgy-ch.txt');
     const config = await loadInitConfig(configPath);
 
     expect(config.baseFolder).toBe('/Volumes/Photos/publish/');
