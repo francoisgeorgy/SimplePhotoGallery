@@ -1,4 +1,4 @@
-base folder : /Volumes/Photos/publish/
+base folder : /Users/francois/photos/photos.francoisgeorgy.ch
 title : Photographs
 description : A curated collection of photographs by François Georgy
 url : https://photos.francoisgeorgy.ch/
