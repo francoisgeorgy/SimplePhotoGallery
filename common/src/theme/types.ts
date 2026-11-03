@@ -1,5 +1,12 @@
-import type { GalleryMetadata, HeaderImageVariants } from '../gallery';
+import type { GalleryMetadata, GalleryTranslations, HeaderImageVariants } from '../gallery';
 import type { ResolvedThumbnailConfig } from './config';
+
+/** Translated display text with its Markdown description rendered for the theme. */
+export interface ResolvedGalleryTranslation {
+  title: string;
+  description: string;
+  parsedDescription: string;
+}
 
 /** Resolved hero data with all paths computed and markdown parsed */
 export interface ResolvedHero {
@@ -18,6 +25,7 @@ export interface ResolvedHero {
     landscapeAvif: string;
     landscapeJpg: string;
   };
+  translations?: Record<string, ResolvedGalleryTranslation>;
 }
 
 /** Resolved image with all paths computed */
@@ -52,6 +60,7 @@ export interface ResolvedSubGallery {
   thumbnailPath: string;
   /** Pre-computed relative path for linking (only present when galleryJsonPath is provided to resolveGalleryData) */
   resolvedPath?: string;
+  translations?: GalleryTranslations;
 }
 
 /** Link from a sub-gallery back to the root gallery. */
@@ -63,6 +72,7 @@ export interface ResolvedHomeNavigation {
 /** Fully resolved gallery data ready for rendering */
 export interface ResolvedGalleryData {
   title: string;
+  defaultLanguage?: string;
   url?: string;
   metadata: GalleryMetadata;
   analyticsScript?: string;

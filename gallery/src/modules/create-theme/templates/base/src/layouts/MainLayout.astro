@@ -13,15 +13,28 @@ interface Props {
   heroSrcsets: ResolvedHero['srcsets'];
   preloadHero?: boolean;
   thumbnails?: Required<ThumbnailConfig>;
+  defaultLanguage?: string;
+  availableLanguages?: string[];
 }
 
-const { title, description, metadata, url, analyticsScript, heroSrcsets, preloadHero = true, thumbnails } = Astro.props;
+const {
+  title,
+  description,
+  metadata,
+  url,
+  analyticsScript,
+  heroSrcsets,
+  preloadHero = true,
+  thumbnails,
+  defaultLanguage = metadata?.language || 'en',
+  availableLanguages = [],
+} = Astro.props;
 
 const rowHeightMax = thumbnails?.size ?? 160;
 ---
 
 <!doctype html>
-<html lang={metadata?.language || 'en'}>
+<html lang={defaultLanguage} data-available-languages={availableLanguages.join(',')} data-default-language={defaultLanguage}>
   <MainHead
     title={title}
     description={description}
@@ -30,10 +43,62 @@ const rowHeightMax = thumbnails?.size ?? 160;
     heroSrcsets={heroSrcsets}
     preloadHero={preloadHero}
   />
+  <script is:inline>
+    (() => {
+      const root = document.documentElement;
+      const availableLanguages = (root.dataset.availableLanguages || '').split(',').filter(Boolean);
+      if (availableLanguages.length < 2) return;
+
+      const defaultLanguage = root.dataset.defaultLanguage || 'en';
+      let savedLanguage;
+      try {
+        savedLanguage = localStorage.getItem('spg-language');
+      } catch {
+        // Storage can be unavailable in privacy-restricted browser contexts.
+      }
+
+      const preferredLanguages = navigator.languages || [navigator.language];
+      const browserLanguage = availableLanguages.find((language) =>
+        preferredLanguages.some(
+          (preferred) =>
+            preferred.toLowerCase() === language.toLowerCase() ||
+            preferred.toLowerCase().startsWith(language.toLowerCase() + '-'),
+        ),
+      );
+      const language = availableLanguages.includes(savedLanguage) ? savedLanguage : browserLanguage || defaultLanguage;
+      root.lang = language;
+    })();
+  </script>
   <body style={`--row-height-max: ${rowHeightMax}px`}>
     <slot />
 
     {analyticsScript && <Fragment set:html={analyticsScript} />}
+    <script is:inline>
+      (() => {
+        const availableLanguages = (document.documentElement.dataset.availableLanguages || '').split(',').filter(Boolean);
+        if (availableLanguages.length < 2) return;
+
+        const setLanguage = (language, persist) => {
+          document.documentElement.lang = language;
+          for (const button of document.querySelectorAll('[data-language-select]')) {
+            button.setAttribute('aria-pressed', String(button.dataset.languageSelect === language));
+          }
+
+          if (persist) {
+            try {
+              localStorage.setItem('spg-language', language);
+            } catch {
+              // The selected language still applies to the current page.
+            }
+          }
+        };
+
+        for (const button of document.querySelectorAll('[data-language-select]')) {
+          button.addEventListener('click', () => setLanguage(button.dataset.languageSelect, true));
+        }
+        setLanguage(document.documentElement.lang, false);
+      })();
+    </script>
   </body>
 </html>
 
@@ -61,6 +126,15 @@ const rowHeightMax = thumbnails?.size ?? 160;
     color: var(--color-text);
     background-color: var(--color-surface);
     font-weight: 400;
+  }
+
+  [data-language] {
+    display: none !important;
+  }
+
+  html[lang='en'] [data-language='en'],
+  html[lang='fr'] [data-language='fr'] {
+    display: revert !important;
   }
 
   body.embed-transparent {

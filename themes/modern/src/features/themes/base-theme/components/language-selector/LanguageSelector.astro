@@ -1,0 +1,56 @@
+---
+interface Props {
+  languages: string[];
+}
+
+const { languages } = Astro.props;
+---
+
+<nav class="language-selector" aria-label="Language">
+  {
+    languages.map((language) => (
+      <button type="button" class="language-selector__option" data-language-select={language}>
+        {language.toUpperCase()}
+      </button>
+    ))
+  }
+</nav>
+
+<style>
+  .language-selector {
+    position: absolute;
+    top: max(1rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 20;
+    display: flex;
+    padding: 0.25rem;
+    background-color: rgba(20, 20, 20, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 0.5rem;
+    backdrop-filter: blur(8px);
+  }
+
+  .language-selector__option {
+    min-width: 2.75rem;
+    padding: 0.45rem 0.6rem;
+    color: rgba(255, 255, 255, 0.68);
+    background: transparent;
+    border: 0;
+    border-radius: 0.3rem;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .language-selector__option[aria-pressed='true'] {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .language-selector__option:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+  }
+</style>

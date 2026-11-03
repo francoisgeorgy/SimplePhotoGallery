@@ -158,7 +158,7 @@ program
     '-g, --gallery <path>',
     'Path to the directory where the gallery will be initialized. Default: same directory as the photos folder',
   )
-  .option('--config <path>', 'Path to a text config file for non-interactive gallery initialization')
+  .option('--config <path>', 'Path to a text or JSON config file for non-interactive gallery initialization')
   .option('-r, --recursive', 'Recursively create galleries from all photos subdirectories', false)
   .option('-d, --default', 'Use default gallery settings instead of asking the user', false)
   .option('-f, --force', 'Force override existing galleries without asking', false)

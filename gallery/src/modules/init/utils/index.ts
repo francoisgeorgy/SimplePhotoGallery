@@ -2,10 +2,30 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import { toUrlPath } from '@simple-photo-gallery/common/theme';
+import { z } from 'zod';
 
 import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '../../../config';
 
-import type { InitConfigFile, MediaFileType } from '../types';
+import type { InitConfigFile, LocalizedText, MediaFileType } from '../types';
+import type { GalleryTranslations } from '@simple-photo-gallery/common';
+
+const LocalizedTextSchema = z.union([z.string(), z.record(z.string(), z.string())]);
+
+const JsonInitConfigSchema = z.object({
+  baseFolder: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  url: z.string().optional(),
+  cloudflare: z.boolean().optional(),
+  defaultLanguage: z.string().default('en'),
+  albums: z.record(
+    z.string(),
+    z.object({
+      title: LocalizedTextSchema,
+      description: LocalizedTextSchema,
+    }),
+  ),
+});
 
 /**
  * Determines the media file type based on file extension
@@ -31,6 +51,53 @@ export function capitalizeTitle(folderName: string): string {
     .filter(Boolean)
     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+/** Returns the configured default text from a localized value. */
+export function getDefaultLocalizedText(value: LocalizedText, defaultLanguage = 'en'): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return value[defaultLanguage] ?? value.en ?? Object.values(value)[0] ?? '';
+}
+
+/** Converts localized title and description values into language-keyed gallery translations. */
+export function getGalleryTranslations(
+  title: LocalizedText,
+  description: LocalizedText,
+  defaultLanguage = 'en',
+): GalleryTranslations | undefined {
+  const languages = new Set<string>();
+  if (typeof title !== 'string') {
+    for (const language of Object.keys(title)) {
+      languages.add(language);
+    }
+  }
+  if (typeof description !== 'string') {
+    for (const language of Object.keys(description)) {
+      languages.add(language);
+    }
+  }
+
+  if (languages.size === 0) {
+    return undefined;
+  }
+
+  languages.add(defaultLanguage);
+
+  const getText = (value: LocalizedText, language: string): string =>
+    typeof value === 'string' ? value : (value[language] ?? getDefaultLocalizedText(value, defaultLanguage));
+
+  return Object.fromEntries(
+    [...languages].map((language) => [
+      language,
+      {
+        title: getText(title, language),
+        description: getText(description, language),
+      },
+    ]),
+  );
 }
 
 /**
@@ -130,5 +197,16 @@ export function parseInitConfig(content: string, resolvedConfigPath?: string): I
 export async function loadInitConfig(configPath: string): Promise<InitConfigFile> {
   const resolvedPath = path.resolve(configPath);
   const content = await fs.readFile(resolvedPath, 'utf8');
+
+  if (path.extname(resolvedPath).toLowerCase() === '.json') {
+    const config = JsonInitConfigSchema.parse(JSON.parse(content));
+    return {
+      ...config,
+      albums: Object.fromEntries(
+        Object.entries(config.albums).map(([folder, album]) => [normalizeAlbumPath(folder), { folder, ...album }]),
+      ),
+    };
+  }
+
   return parseInitConfig(content, resolvedPath);
 }

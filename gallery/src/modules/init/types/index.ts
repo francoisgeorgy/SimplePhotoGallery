@@ -1,4 +1,7 @@
-import type { MediaFile } from '@simple-photo-gallery/common';
+import type { GalleryTranslations, MediaFile } from '@simple-photo-gallery/common';
+
+/** Text that can be shared by every language or translated by language code. */
+export type LocalizedText = string | Record<string, string>;
 
 /** Type for media file types supported by the gallery */
 export type MediaFileType = 'image' | 'video';
@@ -9,7 +12,7 @@ export interface ScanOptions {
   photos: string;
   /** Optional path to the directory where the gallery will be initialized */
   gallery?: string;
-  /** Optional path to a text config file for non-interactive gallery initialization */
+  /** Optional path to a text or JSON config file for non-interactive gallery initialization */
   config?: string;
   /** Whether to recursively create galleries from all photo subdirectories */
   recursive: boolean;
@@ -29,14 +32,14 @@ export interface ScanOptions {
   thumbnailEdge?: 'auto' | 'width' | 'height';
 }
 
-/** Configured album metadata from init text config file */
+/** Configured album metadata from an init config file */
 export interface InitConfigAlbum {
   /** Folder name or relative path of the album */
   folder: string;
   /** Title of the album gallery */
-  title: string;
+  title: LocalizedText;
   /** Description of the album gallery */
-  description: string;
+  description: LocalizedText;
 }
 
 /** Parsed init configuration file */
@@ -51,6 +54,8 @@ export interface InitConfigFile {
   url?: string;
   /** Whether to include Cloudflare Web Analytics script */
   cloudflare?: boolean;
+  /** Language used when a localized album field does not match the browser language */
+  defaultLanguage?: string;
   /** Map of normalized relative album folder paths to album configurations */
   albums: Record<string, InitConfigAlbum>;
 }
@@ -63,6 +68,8 @@ export interface SubGallery {
   headerImage: string;
   /** Relative path to the sub-gallery directory */
   path: string;
+  /** Optional translated display text for the sub-gallery */
+  translations?: GalleryTranslations;
 }
 
 /** Result of scanning a directory for media files and sub-directories */

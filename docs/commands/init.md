@@ -32,7 +32,7 @@ After that, the command will create a `gallery` folder and a `gallery.json` file
 | --------------------------- | --------------------------------------------------------------------- | --------------------- |
 | `-p, --photos <path>`       | Path to folder containing photos                                      | Current directory     |
 | `-g, --gallery <path>`      | Where to create the gallery                                           | Same as photos folder |
-| `--config <path>`           | Path to a text config file for non-interactive gallery initialization | None                  |
+| `--config <path>`           | Path to a text or JSON config file for non-interactive initialization | None                  |
 | `-r, --recursive`           | Create galleries from subdirectories                                  | `false`               |
 | `-d, --default`             | Use default settings (skip prompts)                                   | `false`               |
 | `-f, --force`               | Force override existing galleries without asking                      | `false`               |
@@ -87,19 +87,45 @@ spg init --cloudflare
 
 ## Initialize from a config file
 
-You can initialize a recursive gallery without prompts using a text config file:
+You can initialize a recursive gallery without prompts using a config file:
 
 ```bash
-spg init --config conf/francoisgeorgy-ch.txt
+spg init --config conf/francoisgeorgy-ch.json
 ```
 
 Use `--force` only if you want to overwrite existing generated gallery files:
 
 ```bash
-spg init --config conf/francoisgeorgy-ch.txt --force
+spg init --config conf/francoisgeorgy-ch.json --force
 ```
 
-Example config:
+JSON configs support localized album titles and descriptions. The default language is used for generated metadata and as a fallback when the browser does not prefer a configured language:
+
+```json
+{
+    "baseFolder": "/Volumes/Photos/publish/",
+    "defaultLanguage": "en",
+    "title": "Photographs",
+    "description": "A curated collection of photographs",
+    "url": "https://photos.example.com/",
+    "albums": {
+        "after-hours": {
+            "title": {
+                "en": "After Hours",
+                "fr": "Après la tombée de la nuit"
+            },
+            "description": {
+                "en": "Night photographs",
+                "fr": "Photographies de nuit"
+            }
+        }
+    }
+}
+```
+
+The generated page selects a configured language from the visitor's browser preferences. The language selector stores an explicit choice in `localStorage`. Search and social metadata use `defaultLanguage`.
+
+Text configs remain supported for single-language galleries:
 
 ```text
 base folder : /Volumes/Photos/publish/

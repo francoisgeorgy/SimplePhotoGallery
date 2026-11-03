@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -74,5 +74,39 @@ describe('gallery smoke flow', () => {
       expect(html).toContain(`data-pswp-width="${image.width}"`);
       expect(html).toContain(`data-pswp-height="${image.height}"`);
     }
+  });
+
+  test('builds localized album text with browser-language selection', () => {
+    runCliCommand(['init', '--photos', tempDir, '--default']);
+
+    const galleryJsonPath = path.join(tempDir, 'gallery', 'gallery.json');
+    const galleryData = JSON.parse(readFileSync(galleryJsonPath, 'utf8'));
+    galleryData.title = 'After Hours';
+    galleryData.description = 'Night **photographs**';
+    galleryData.defaultLanguage = 'en';
+    galleryData.translations = {
+      en: {
+        title: 'After Hours',
+        description: 'Night **photographs**',
+      },
+      fr: {
+        title: 'Après la tombée de la nuit',
+        description: 'Photographies **de nuit**',
+      },
+    };
+    writeFileSync(galleryJsonPath, JSON.stringify(galleryData, undefined, 2));
+
+    runCliCommand(['build', '--gallery', tempDir, '--theme', modernThemePath, '--no-thumbnails']);
+
+    const html = readFileSync(path.join(tempDir, 'index.html'), 'utf8');
+    expect(html).toContain('data-language="en"');
+    expect(html).toContain('data-language="fr"');
+    expect(html).toContain('After Hours');
+    expect(html).toContain('Après la tombée de la nuit');
+    expect(html).toContain('<strong>de nuit</strong>');
+    expect(html).toContain('data-language-select="en"');
+    expect(html).toContain('data-language-select="fr"');
+    expect(html).toContain('navigator.languages');
+    expect(html).toContain('spg-language');
   });
 });

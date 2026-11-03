@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 
 import { init } from '../src/modules/init';
 import { loadInitConfig, normalizeAlbumPath, parseInitConfig } from '../src/modules/init/utils';
@@ -32,67 +31,89 @@ describe('normalizeAlbumPath', () => {
 });
 
 describe('parseInitConfig & loadInitConfig', () => {
-  test('parses conf/francoisgeorgy-ch.txt accurately', async () => {
-    const configPath = fs.existsSync(path.resolve(process.cwd(), 'conf', 'francoisgeorgy-ch.txt'))
-      ? path.resolve(process.cwd(), 'conf', 'francoisgeorgy-ch.txt')
-      : path.resolve(process.cwd(), '..', 'conf', 'francoisgeorgy-ch.txt');
-    const config = await loadInitConfig(configPath);
+  test('loads and parses a config file', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spg-load-init-config-test-'));
+    const configPath = path.join(tempDir, 'gallery-config.txt');
+    fs.writeFileSync(
+      configPath,
+      [
+        'base folder : /photos',
+        'title : Portfolio',
+        'description : Curated photographs',
+        'url : https://photos.example.com/',
+        'cloudflare : true',
+        '',
+        'albums:',
+        'after-hours : After Hours : Night photographs',
+      ].join('\n'),
+      'utf8',
+    );
 
-    expect(config.baseFolder).toBe('/Volumes/Photos/publish/');
-    expect(config.title).toBe('Photographs');
-    expect(config.description).toBe('A curated collection of photographs by François Georgy');
-    expect(config.url).toBe('https://photos.francoisgeorgy.ch/');
-    expect(config.cloudflare).toBeUndefined();
+    try {
+      await expect(loadInitConfig(configPath)).resolves.toEqual({
+        albums: {
+          'after-hours': {
+            folder: 'after-hours',
+            title: 'After Hours',
+            description: 'Night photographs',
+          },
+        },
+        baseFolder: '/photos',
+        title: 'Portfolio',
+        description: 'Curated photographs',
+        url: 'https://photos.example.com/',
+        cloudflare: true,
+      });
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
 
-    expect(Object.keys(config.albums)).toHaveLength(8);
+  test('loads localized album metadata from a JSON config file', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spg-load-localized-init-config-test-'));
+    const configPath = path.join(tempDir, 'gallery-config.json');
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        baseFolder: '/photos',
+        defaultLanguage: 'en',
+        albums: {
+          'after-hours': {
+            title: {
+              en: 'After Hours',
+              fr: 'Après la tombée de la nuit',
+            },
+            description: {
+              en: 'Night photographs',
+              fr: 'Photographies de nuit',
+            },
+          },
+        },
+      }),
+      'utf8',
+    );
 
-    expect(config.albums['after-hours']).toEqual({
-      folder: 'after-hours',
-      title: 'After Hours',
-      description: 'Ville, crépuscule, nuit, lumières artificielles',
-    });
-
-    expect(config.albums['against-the-light']).toEqual({
-      folder: 'against-the-light',
-      title: 'Against the Light',
-      description: 'Contre-jours, silhouettes, coucher de soleil',
-    });
-
-    expect(config.albums['in_motion']).toEqual({
-      folder: 'in_motion',
-      title: 'In Motion',
-      description: 'Flou intentionnel, bougé, longues expositions',
-    });
-
-    expect(config.albums['monochrome']).toEqual({
-      folder: 'monochrome',
-      title: 'Monochrome',
-      description: 'Sélection de photographies noir et blanc',
-    });
-
-    expect(config.albums['lines-and-forms']).toEqual({
-      folder: 'lines-and-forms',
-      title: 'Lines & Forms',
-      description: 'Architecture, géométrie, perspectives',
-    });
-
-    expect(config.albums['urban-canvas']).toEqual({
-      folder: 'urban-canvas',
-      title: 'Urban Canvas',
-      description: 'Graffiti et street art',
-    });
-
-    expect(config.albums['natural-world']).toEqual({
-      folder: 'natural-world',
-      title: 'Natural World',
-      description: 'Nature et paysages',
-    });
-
-    expect(config.albums['urban-fragments']).toEqual({
-      folder: 'urban-fragments',
-      title: 'Urban Fragments',
-      description: 'Scènes de rue, détails et ambiances urbaines',
-    });
+    try {
+      await expect(loadInitConfig(configPath)).resolves.toEqual({
+        baseFolder: '/photos',
+        defaultLanguage: 'en',
+        albums: {
+          'after-hours': {
+            folder: 'after-hours',
+            title: {
+              en: 'After Hours',
+              fr: 'Après la tombée de la nuit',
+            },
+            description: {
+              en: 'Night photographs',
+              fr: 'Photographies de nuit',
+            },
+          },
+        },
+      });
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   test('supports key aliases, comments, empty lines, and descriptions with colons', () => {
@@ -255,6 +276,72 @@ monochrome : Monochrome : Sélection de photographies noir et blanc
 
     expect(otherData.title).toBe('Other Album');
     expect(otherData.description).toBe('My gallery with fantastic photos.');
+  });
+
+  test('writes localized album metadata from a JSON config file', async () => {
+    const configFilePath = path.join(tempDir, 'gallery-config.json');
+    fs.writeFileSync(
+      configFilePath,
+      JSON.stringify({
+        baseFolder: photosDir,
+        defaultLanguage: 'en',
+        title: 'Photographs',
+        description: 'A curated collection of photographs',
+        albums: {
+          'after-hours': {
+            title: {
+              en: 'After Hours',
+              fr: 'Après la tombée de la nuit',
+            },
+            description: {
+              en: 'Night photographs',
+              fr: 'Photographies de nuit',
+            },
+          },
+        },
+      }),
+      'utf8',
+    );
+
+    await init(
+      {
+        photos: tempDir,
+        config: configFilePath,
+        recursive: false,
+        default: false,
+        force: false,
+      },
+      createMockUI(),
+    );
+
+    const afterHoursData = JSON.parse(
+      fs.readFileSync(path.join(photosDir, 'after-hours', 'gallery', 'gallery.json'), 'utf8'),
+    );
+    expect(afterHoursData).toMatchObject({
+      title: 'After Hours',
+      description: 'Night photographs',
+      defaultLanguage: 'en',
+      translations: {
+        en: {
+          title: 'After Hours',
+          description: 'Night photographs',
+        },
+        fr: {
+          title: 'Après la tombée de la nuit',
+          description: 'Photographies de nuit',
+        },
+      },
+    });
+
+    const rootData = JSON.parse(fs.readFileSync(path.join(photosDir, 'gallery', 'gallery.json'), 'utf8'));
+    const afterHoursCard = rootData.subGalleries.galleries.find(
+      (gallery: { path: string }) => gallery.path === '../after-hours',
+    );
+    expect(rootData.defaultLanguage).toBe('en');
+    expect(afterHoursCard).toMatchObject({
+      title: 'After Hours',
+      translations: afterHoursData.translations,
+    });
   });
 
   test('fails without --force when gallery already exists and overwrites when --force is provided', async () => {

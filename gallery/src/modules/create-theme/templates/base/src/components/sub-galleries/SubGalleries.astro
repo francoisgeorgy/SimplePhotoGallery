@@ -8,9 +8,10 @@ interface Props {
   parsedDescription?: string;
   subGalleries: ResolvedSubGallery[];
   isHomepage?: boolean;
+  defaultLanguage?: string;
 }
 
-const { title, parsedDescription, subGalleries, isHomepage = false } = Astro.props;
+const { title, parsedDescription, subGalleries, isHomepage = false, defaultLanguage = 'en' } = Astro.props;
 ---
 
 <section class="sub-galleries">
@@ -37,7 +38,21 @@ const { title, parsedDescription, subGalleries, isHomepage = false } = Astro.pro
               <img src={subgallery.thumbnailPath} alt={subgallery.title} loading="lazy" />
             </div>
             <div class="sub-galleries__item-content">
-              <h3 class="sub-galleries__item-title">{subgallery.title}</h3>
+              {subgallery.translations ? (
+                Object.entries({
+                  [defaultLanguage]: {
+                    title: subgallery.title,
+                    description: '',
+                  },
+                  ...subgallery.translations,
+                }).map(([language, translation]) => (
+                  <h3 class="sub-galleries__item-title" data-language={language}>
+                    {translation.title}
+                  </h3>
+                ))
+              ) : (
+                <h3 class="sub-galleries__item-title">{subgallery.title}</h3>
+              )}
             </div>
           </a>
         ))

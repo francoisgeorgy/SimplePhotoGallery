@@ -78,6 +78,7 @@ function resolveSubGallery(
     path: subGallery.path,
     thumbnailPath: getSubgalleryThumbnailPath(subGallery.headerImage, resolvedPath, thumbnailFormat),
     resolvedPath,
+    translations: subGallery.translations,
   };
 }
 
@@ -92,6 +93,19 @@ async function resolveHero(gallery: GalleryData): Promise<ResolvedHero> {
   const { title, description, headerImage, headerImageBlurHash, headerImageVariants, mediaBaseUrl, thumbsBaseUrl } = gallery;
 
   const parsedDescription = description ? await renderMarkdown(description) : '';
+  const translations = gallery.translations
+    ? Object.fromEntries(
+        await Promise.all(
+          Object.entries(gallery.translations).map(async ([language, translation]) => [
+            language,
+            {
+              ...translation,
+              parsedDescription: await renderMarkdown(translation.description),
+            },
+          ]),
+        ),
+      )
+    : undefined;
   const imgBasename = headerImage ? path.basename(headerImage, path.extname(headerImage)) : 'header';
   const thumbnailBasePath = thumbsBaseUrl || 'gallery/images';
   const headerPhotoPath = getPhotoPath(headerImage || '', mediaBaseUrl);
@@ -150,6 +164,7 @@ async function resolveHero(gallery: GalleryData): Promise<ResolvedHero> {
     thumbnailBasePath,
     imgBasename,
     srcsets,
+    translations,
   };
 }
 
@@ -209,6 +224,7 @@ export async function resolveGalleryData(
 
   return {
     title: gallery.title,
+    defaultLanguage: gallery.defaultLanguage,
     url: gallery.url,
     metadata: gallery.metadata,
     analyticsScript: gallery.analyticsScript,

@@ -363,6 +363,49 @@ describe('CLI e2e user workflows', () => {
     expect(child2Data.navigation?.home?.label).toBe('Curated Photographs');
   });
 
+  test('initializes localized album metadata from a JSON config', () => {
+    const galleryDir = makeTempDir('localized-config-init');
+    const albumDir = path.join(galleryDir, 'after-hours');
+    copySingleFixture(albumDir);
+
+    const configFile = path.join(galleryDir, 'gallery-config.json');
+    writeFileSync(
+      configFile,
+      JSON.stringify({
+        baseFolder: galleryDir,
+        defaultLanguage: 'en',
+        title: 'Photographs',
+        description: 'A curated collection',
+        albums: {
+          'after-hours': {
+            title: {
+              en: 'After Hours',
+              fr: 'Après la tombée de la nuit',
+            },
+            description: {
+              en: 'Night photographs',
+              fr: 'Photographies de nuit',
+            },
+          },
+        },
+      }),
+      'utf8',
+    );
+
+    runSourceCli(['init', '--config', configFile]);
+
+    const album = readGalleryData(albumDir);
+    expect(album.defaultLanguage).toBe('en');
+    expect(album.title).toBe('After Hours');
+    expect(album.translations?.fr).toEqual({
+      title: 'Après la tombée de la nuit',
+      description: 'Photographies de nuit',
+    });
+
+    const root = readGalleryData(galleryDir);
+    expect(root.subGalleries.galleries[0]?.translations?.fr.title).toBe('Après la tombée de la nuit');
+  });
+
   test('build scans new files by default, respects --no-scan, and prunes missing files', () => {
     const galleryDir = makeTempDir('scan-prune');
     copySingleFixture(galleryDir);
@@ -519,6 +562,18 @@ describe('CLI help, telemetry, and validation', () => {
     });
     expect(`${badTelemetry.stdout}\n${badTelemetry.stderr}`).toContain('Telemetry option must be either 0 or 1');
     expect(existsSync(path.join(tempDir, 'gallery'))).toBe(false);
+  });
+
+  test('reports init failure details without verbose mode', () => {
+    const tempDir = makeTempDir('invalid-init-config');
+    const configFile = path.join(tempDir, 'gallery-config.txt');
+    writeFileSync(configFile, 'albums:\ninvalid-album-line\n', 'utf8');
+
+    const result = runSourceCli(['init', '--config', configFile], { expectedStatus: 1 });
+
+    expect(`${result.stdout}\n${result.stderr}`).toContain(
+      `Invalid album line in ${configFile}: "invalid-album-line". Expected "folder : title : description".`,
+    );
   });
 
   test('persists telemetry preferences through the telemetry command', () => {

@@ -8,6 +8,7 @@ import Footer from '@/components/footer/Footer.astro';
 import GallerySection from '@/components/gallery-section/GallerySection.astro';
 import Hero from '@/components/hero/Hero.astro';
 import HomeLink from '@/components/home-link/HomeLink.astro';
+import LanguageSelector from '@/components/language-selector/LanguageSelector.astro';
 import PhotoSwipe from '@/components/lightbox/PhotoSwipe.astro';
 import SubGalleries from '@/components/sub-galleries/SubGalleries.astro';
 import MainLayout from '@/layouts/MainLayout.astro';
@@ -26,6 +27,13 @@ const gallery = await resolveGalleryData(raw, { galleryJsonPath, themeConfig });
 const showCtaBanner = gallery.ctaBanner === true;
 const hasGalleryImages = gallery.sections.some((section) => section.images.length > 0);
 const isSubGalleryHomepage = !hasGalleryImages && Boolean(gallery.subGalleries && gallery.subGalleries.galleries.length > 0);
+const availableLanguages = [
+  ...new Set([
+    ...Object.keys(gallery.hero.translations ?? {}),
+    ...(gallery.subGalleries?.galleries.flatMap((subGallery) => Object.keys(subGallery.translations ?? {})) ?? []),
+  ]),
+];
+const defaultLanguage = gallery.defaultLanguage ?? availableLanguages[0] ?? gallery.metadata.language ?? 'en';
 ---
 
 <script>
@@ -48,8 +56,11 @@ const isSubGalleryHomepage = !hasGalleryImages && Boolean(gallery.subGalleries &
   analyticsScript={gallery.analyticsScript}
   heroSrcsets={gallery.hero.srcsets}
   preloadHero={!isSubGalleryHomepage}
-  thumbnails={gallery.thumbnails}>
+  thumbnails={gallery.thumbnails}
+  defaultLanguage={defaultLanguage}
+  availableLanguages={availableLanguages}>
   {gallery.navigation?.home && <HomeLink home={gallery.navigation.home} />}
+  {availableLanguages.length > 1 && <LanguageSelector languages={availableLanguages} />}
   {!isSubGalleryHomepage && <Hero hero={gallery.hero} />}
 
   {
@@ -59,6 +70,7 @@ const isSubGalleryHomepage = !hasGalleryImages && Boolean(gallery.subGalleries &
         parsedDescription={gallery.subGalleries.parsedDescription}
         subGalleries={gallery.subGalleries.galleries}
         isHomepage={isSubGalleryHomepage}
+        defaultLanguage={defaultLanguage}
       />
     )
   }

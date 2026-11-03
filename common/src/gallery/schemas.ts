@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+/** Translated display text for a gallery or sub-gallery. */
+export const GalleryTranslationSchema = z.looseObject({
+  title: z.string(),
+  description: z.string(),
+});
+
+/** Gallery display text keyed by language code. */
+export const GalleryTranslationsSchema = z.record(z.string(), GalleryTranslationSchema);
+
 /** Zod schema for thumbnail metadata including path and dimensions */
 export const ThumbnailSchema = z.looseObject({
   baseUrl: z.string().optional(),
@@ -60,6 +69,7 @@ export const SubGallerySchema = z.looseObject({
   title: z.string(),
   headerImage: z.string(),
   path: z.string(),
+  translations: GalleryTranslationsSchema.optional(),
 });
 
 /** Zod schema for portrait image size variants */
@@ -117,6 +127,8 @@ export const GalleryMetadataSchema = z.looseObject({
 export const GalleryDataSchema = z.looseObject({
   title: z.string(),
   description: z.string(),
+  defaultLanguage: z.string().optional(),
+  translations: GalleryTranslationsSchema.optional(),
   mediaBasePath: z.string().optional(),
   url: z.string().optional(),
   headerImage: z.string(),

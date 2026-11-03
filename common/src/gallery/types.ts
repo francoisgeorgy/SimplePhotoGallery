@@ -2,6 +2,7 @@ import type {
   GalleryDataDeprecatedSchema,
   GalleryDataSchema,
   GalleryMetadataSchema,
+  GalleryTranslationsSchema,
   GallerySectionDeprecatedSchema,
   GallerySectionSchema,
   HeaderImageVariantsSchema,
@@ -29,6 +30,9 @@ export type HeaderImageVariants = z.infer<typeof HeaderImageVariantsSchema>;
 
 /** TypeScript type for gallery metadata */
 export type GalleryMetadata = z.infer<typeof GalleryMetadataSchema>;
+
+/** Display text translations keyed by language code. */
+export type GalleryTranslations = z.infer<typeof GalleryTranslationsSchema>;
 
 /** TypeScript type for complete gallery data structure */
 export type GalleryData = z.infer<typeof GalleryDataSchema>;

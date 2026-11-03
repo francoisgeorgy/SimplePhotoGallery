@@ -1,0 +1,89 @@
+{
+    "baseFolder": "/Users/francois/photos/photos.francoisgeorgy.ch",
+    "defaultLanguage": "en",
+    "title": "Photographs",
+    "description": "A curated collection of photographs by François Georgy",
+    "url": "https://photos.francoisgeorgy.ch/",
+    "albums": {
+        "after-hours": {
+            "title": {
+                "en": "After Hours",
+                "fr": "Après la tombée de la nuit"
+            },
+            "description": {
+                "en": "City, twilight, night, artificial lights",
+                "fr": "Ville, crépuscule, nuit, lumières artificielles"
+            }
+        },
+        "against-the-light": {
+            "title": {
+                "en": "Against the Light",
+                "fr": "À contre-jour"
+            },
+            "description": {
+                "en": "Backlighting, silhouettes, sunsets",
+                "fr": "Contre-jours, silhouettes, coucher de soleil"
+            }
+        },
+        "in_motion": {
+            "title": {
+                "en": "In Motion",
+                "fr": "En mouvement"
+            },
+            "description": {
+                "en": "Intentional blur, motion, long exposures",
+                "fr": "Flou intentionnel, bougé, longues expositions"
+            }
+        },
+        "monochrome": {
+            "title": {
+                "en": "Monochrome",
+                "fr": "Monochrome"
+            },
+            "description": {
+                "en": "A selection of black-and-white photographs",
+                "fr": "Sélection de photographies noir et blanc"
+            }
+        },
+        "lines-and-forms": {
+            "title": {
+                "en": "Lines & Forms",
+                "fr": "Lignes et formes"
+            },
+            "description": {
+                "en": "Architecture, geometry, perspectives",
+                "fr": "Architecture, géométrie, perspectives"
+            }
+        },
+        "urban-canvas": {
+            "title": {
+                "en": "Urban Canvas",
+                "fr": "Toile urbaine"
+            },
+            "description": {
+                "en": "Graffiti and street art",
+                "fr": "Graffiti et street art"
+            }
+        },
+        "natural-world": {
+            "title": {
+                "en": "Natural World",
+                "fr": "Monde naturel"
+            },
+            "description": {
+                "en": "Nature and landscapes",
+                "fr": "Nature et paysages"
+            }
+        },
+        "urban-fragments": {
+            "title": {
+                "en": "Urban Fragments",
+                "fr": "Fragments urbains"
+            },
+            "description": {
+                "en": "Street scenes, details, and urban atmospheres",
+                "fr": "Scènes de rue, détails et ambiances urbaines"
+            }
+        }
+    }
+}

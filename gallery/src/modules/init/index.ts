@@ -4,7 +4,14 @@ import process from 'node:process';
 
 import { joinUrl, toUrlPath } from '@simple-photo-gallery/common/theme';
 
-import { capitalizeTitle, getMediaFileType, loadInitConfig, normalizeAlbumPath } from './utils';
+import {
+  capitalizeTitle,
+  getDefaultLocalizedText,
+  getGalleryTranslations,
+  getMediaFileType,
+  loadInitConfig,
+  normalizeAlbumPath,
+} from './utils';
 
 import { CLOUDFLARE_ANALYTICS_SCRIPT } from '../../config';
 import { findGalleries, shouldSkipDirectory } from '../../utils';
@@ -18,7 +25,7 @@ import type {
   SubGallery,
 } from './types';
 import type { CommandResultSummary } from '../telemetry/types';
-import type { GalleryData, MediaFile } from '@simple-photo-gallery/common';
+import type { GalleryData, GalleryTranslations, MediaFile } from '@simple-photo-gallery/common';
 import type { ConsolaInstance } from 'consola';
 
 /**
@@ -217,14 +224,16 @@ async function createGalleryJson(
 
   let initialTitle = defaultTitle;
   let initialDescription = 'My gallery with fantastic photos.';
+  let translations: GalleryTranslations | undefined;
 
   if (initConfig) {
     if (relativeGalleryPath) {
       const normalizedPath = normalizeAlbumPath(relativeGalleryPath);
       const album = initConfig.albums[normalizedPath];
       if (album) {
-        initialTitle = album.title;
-        initialDescription = album.description;
+        initialTitle = getDefaultLocalizedText(album.title, initConfig.defaultLanguage);
+        initialDescription = getDefaultLocalizedText(album.description, initConfig.defaultLanguage);
+        translations = getGalleryTranslations(album.title, album.description, initConfig.defaultLanguage);
       }
     } else {
       if (initConfig.title) {
@@ -239,6 +248,8 @@ async function createGalleryJson(
   let galleryData: GalleryData = {
     title: initialTitle,
     description: initialDescription,
+    ...(initConfig?.defaultLanguage && { defaultLanguage: initConfig.defaultLanguage }),
+    ...(translations && { translations }),
     headerImage: mediaFiles[0]?.filename || '',
     mediaBasePath: mediaBasePath,
     metadata: {},
@@ -385,6 +396,7 @@ async function processDirectory(
   const subGalleries: SubGallery[] = [];
   let createdCurrentGallery = false;
   let createdGalleryTitle: string | undefined;
+  let createdGalleryTranslations: GalleryTranslations | undefined;
 
   // Scan current directory for media files
   const { mediaFiles, subGalleryDirectories } = await scanDirectory(scanPath, ui);
@@ -472,6 +484,7 @@ async function processDirectory(
 
       createdCurrentGallery = true;
       createdGalleryTitle = galleryData.title;
+      createdGalleryTranslations = galleryData.translations;
       totalGalleries += 1;
 
       ui.success(
@@ -493,6 +506,7 @@ async function processDirectory(
       title: createdGalleryTitle || capitalizeTitle(dirName),
       headerImage: mediaFiles[0]?.filename || '',
       path: `../${dirName}`,
+      ...(createdGalleryTranslations && { translations: createdGalleryTranslations }),
     };
   }
 
@@ -563,7 +577,8 @@ export async function init(options: ScanOptions, ui: ConsolaInstance): Promise<C
       processedGalleryCount: result.totalGalleries,
     };
   } catch (error) {
-    ui.error('Error initializing gallery');
+    const message = error instanceof Error ? error.message : String(error);
+    ui.error(`Error initializing gallery: ${message}`);
     throw error;
   }
 }
