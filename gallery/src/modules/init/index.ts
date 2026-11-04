@@ -236,12 +236,17 @@ async function createGalleryJson(
         translations = getGalleryTranslations(album.title, album.description, initConfig.defaultLanguage);
       }
     } else {
-      if (initConfig.title) {
-        initialTitle = initConfig.title;
+      if (initConfig.title !== undefined) {
+        initialTitle = getDefaultLocalizedText(initConfig.title, initConfig.defaultLanguage);
       }
-      if (initConfig.description) {
-        initialDescription = initConfig.description;
+      if (initConfig.description !== undefined) {
+        initialDescription = getDefaultLocalizedText(initConfig.description, initConfig.defaultLanguage);
       }
+      translations = getGalleryTranslations(
+        initConfig.title ?? initialTitle,
+        initConfig.description ?? initialDescription,
+        initConfig.defaultLanguage,
+      );
     }
   }
 
@@ -264,8 +269,8 @@ async function createGalleryJson(
       },
     ],
     subGalleries: {
-      title: isSubGalleryHomepage ? initialTitle : 'Sub Galleries',
-      ...(isSubGalleryHomepage && initConfig?.description && { description: initConfig.description }),
+      title: isSubGalleryHomepage ? initialTitle : '',
+      ...(isSubGalleryHomepage && initialDescription && { description: initialDescription }),
       galleries: relativeSubGalleries,
     },
     ...(ctaBanner !== undefined && { ctaBanner }),

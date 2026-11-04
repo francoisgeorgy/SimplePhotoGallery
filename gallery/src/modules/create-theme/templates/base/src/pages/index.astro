@@ -71,6 +71,7 @@ const defaultLanguage = gallery.defaultLanguage ?? availableLanguages[0] ?? gall
         subGalleries={gallery.subGalleries.galleries}
         isHomepage={isSubGalleryHomepage}
         defaultLanguage={defaultLanguage}
+        translations={isSubGalleryHomepage ? gallery.hero.translations : undefined}
       />
     )
   }

@@ -47,9 +47,9 @@ export interface InitConfigFile {
   /** Base folder path where photos are stored */
   baseFolder?: string;
   /** Root gallery title */
-  title?: string;
+  title?: LocalizedText;
   /** Root gallery description */
-  description?: string;
+  description?: LocalizedText;
   /** Root base URL */
   url?: string;
   /** Whether to include Cloudflare Web Analytics script */

@@ -435,6 +435,7 @@ describe('Multi-folder gallery', () => {
       // Validate main gallery (3 root images + 2 subgalleries)
       const mainGalleryPath = path.resolve(multiTestPath, 'gallery');
       const mainValidatedData = validateGalleryStructure(mainGalleryPath, 3, 2);
+      expect(mainValidatedData.subGalleries.title).toBe('');
 
       // Check subgalleries metadata
       expect(mainValidatedData.subGalleries.galleries).toHaveLength(2);

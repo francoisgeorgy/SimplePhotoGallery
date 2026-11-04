@@ -1,14 +1,20 @@
 {
-    "baseFolder": "/Users/francois/photos/photos.francoisgeorgy.ch",
+    "baseFolder": "/Users/francois/photos/publish",
     "defaultLanguage": "en",
-    "title": "Photographs",
-    "description": "A curated collection of photographs by François Georgy",
+    "title": {
+        "en": "François Georgy - Photographs",
+        "fr": "François Georgy - Photographies"
+    },
+    "description": {
+        "en": "",
+        "fr": ""
+    },
     "url": "https://photos.francoisgeorgy.ch/",
     "albums": {
         "after-hours": {
             "title": {
                 "en": "After Hours",
-                "fr": "Après la tombée de la nuit"
+                "fr": "À la tombée du jour"
             },
             "description": {
                 "en": "City, twilight, night, artificial lights",
@@ -25,7 +31,7 @@
                 "fr": "Contre-jours, silhouettes, coucher de soleil"
             }
         },
-        "in_motion": {
+        "in-motion": {
             "title": {
                 "en": "In Motion",
                 "fr": "En mouvement"
@@ -55,10 +61,10 @@
                 "fr": "Architecture, géométrie, perspectives"
             }
         },
-        "urban-canvas": {
+        "street-art": {
             "title": {
-                "en": "Urban Canvas",
-                "fr": "Toile urbaine"
+                "en": "Street Art",
+                "fr": "Street Art"
             },
             "description": {
                 "en": "Graffiti and street art",
@@ -68,7 +74,7 @@
         "natural-world": {
             "title": {
                 "en": "Natural World",
-                "fr": "Monde naturel"
+                "fr": "Nature"
             },
             "description": {
                 "en": "Nature and landscapes",

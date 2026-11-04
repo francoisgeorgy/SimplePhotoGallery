@@ -13,8 +13,8 @@ const LocalizedTextSchema = z.union([z.string(), z.record(z.string(), z.string()
 
 const JsonInitConfigSchema = z.object({
   baseFolder: z.string().optional(),
-  title: z.string().optional(),
-  description: z.string().optional(),
+  title: LocalizedTextSchema.optional(),
+  description: LocalizedTextSchema.optional(),
   url: z.string().optional(),
   cloudflare: z.boolean().optional(),
   defaultLanguage: z.string().default('en'),

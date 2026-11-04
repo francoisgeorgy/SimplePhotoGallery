@@ -363,7 +363,7 @@ describe('CLI e2e user workflows', () => {
     expect(child2Data.navigation?.home?.label).toBe('Curated Photographs');
   });
 
-  test('initializes localized album metadata from a JSON config', () => {
+  test('initializes and renders localized root and album metadata from a JSON config', () => {
     const galleryDir = makeTempDir('localized-config-init');
     const albumDir = path.join(galleryDir, 'after-hours');
     copySingleFixture(albumDir);
@@ -374,8 +374,14 @@ describe('CLI e2e user workflows', () => {
       JSON.stringify({
         baseFolder: galleryDir,
         defaultLanguage: 'en',
-        title: 'Photographs',
-        description: 'A curated collection',
+        title: {
+          en: 'Photographs',
+          fr: 'Photographies',
+        },
+        description: {
+          en: '',
+          fr: '',
+        },
         albums: {
           'after-hours': {
             title: {
@@ -403,7 +409,20 @@ describe('CLI e2e user workflows', () => {
     });
 
     const root = readGalleryData(galleryDir);
+    expect(root.title).toBe('Photographs');
+    expect(root.description).toBe('');
+    expect(root.translations?.fr).toEqual({
+      title: 'Photographies',
+      description: '',
+    });
     expect(root.subGalleries.galleries[0]?.translations?.fr.title).toBe('Après la tombée de la nuit');
+
+    runSourceCli(['build', '--gallery', galleryDir, '--recursive', '--theme', modernThemePath, '--no-thumbnails']);
+
+    const rootHtml = readHtml(galleryDir);
+    expect(rootHtml).toMatch(/<h1 class="sub-galleries__header-title"[^>]*>Photographs<\/h1>/);
+    expect(rootHtml).toMatch(/<h1 class="sub-galleries__header-title"[^>]*>Photographies<\/h1>/);
+    expect(rootHtml).not.toContain('<div class="sub-galleries__header-description markdown-content"');
   });
 
   test('build scans new files by default, respects --no-scan, and prunes missing files', () => {

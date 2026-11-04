@@ -69,7 +69,7 @@ describe('parseInitConfig & loadInitConfig', () => {
     }
   });
 
-  test('loads localized album metadata from a JSON config file', async () => {
+  test('loads localized root and album metadata from a JSON config file', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spg-load-localized-init-config-test-'));
     const configPath = path.join(tempDir, 'gallery-config.json');
     fs.writeFileSync(
@@ -77,6 +77,14 @@ describe('parseInitConfig & loadInitConfig', () => {
       JSON.stringify({
         baseFolder: '/photos',
         defaultLanguage: 'en',
+        title: {
+          en: 'Photographs',
+          fr: 'Photographies',
+        },
+        description: {
+          en: '',
+          fr: '',
+        },
         albums: {
           'after-hours': {
             title: {
@@ -97,6 +105,14 @@ describe('parseInitConfig & loadInitConfig', () => {
       await expect(loadInitConfig(configPath)).resolves.toEqual({
         baseFolder: '/photos',
         defaultLanguage: 'en',
+        title: {
+          en: 'Photographs',
+          fr: 'Photographies',
+        },
+        description: {
+          en: '',
+          fr: '',
+        },
         albums: {
           'after-hours': {
             folder: 'after-hours',
@@ -278,15 +294,21 @@ monochrome : Monochrome : Sélection de photographies noir et blanc
     expect(otherData.description).toBe('My gallery with fantastic photos.');
   });
 
-  test('writes localized album metadata from a JSON config file', async () => {
+  test('writes localized root and album metadata from a JSON config file', async () => {
     const configFilePath = path.join(tempDir, 'gallery-config.json');
     fs.writeFileSync(
       configFilePath,
       JSON.stringify({
         baseFolder: photosDir,
         defaultLanguage: 'en',
-        title: 'Photographs',
-        description: 'A curated collection of photographs',
+        title: {
+          en: 'Photographs',
+          fr: 'Photographies',
+        },
+        description: {
+          en: '',
+          fr: '',
+        },
         albums: {
           'after-hours': {
             title: {
@@ -338,6 +360,24 @@ monochrome : Monochrome : Sélection de photographies noir et blanc
       (gallery: { path: string }) => gallery.path === '../after-hours',
     );
     expect(rootData.defaultLanguage).toBe('en');
+    expect(rootData).toMatchObject({
+      title: 'Photographs',
+      description: '',
+      translations: {
+        en: {
+          title: 'Photographs',
+          description: '',
+        },
+        fr: {
+          title: 'Photographies',
+          description: '',
+        },
+      },
+      subGalleries: {
+        title: 'Photographs',
+      },
+    });
+    expect(rootData.subGalleries).not.toHaveProperty('description');
     expect(afterHoursCard).toMatchObject({
       title: 'After Hours',
       translations: afterHoursData.translations,

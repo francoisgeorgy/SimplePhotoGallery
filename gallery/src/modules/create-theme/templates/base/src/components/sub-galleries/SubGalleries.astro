@@ -1,7 +1,7 @@
 ---
 import Container from '@/components/container/Container.astro';
 
-import type { ResolvedSubGallery } from '@simple-photo-gallery/common/theme';
+import type { ResolvedGalleryTranslation, ResolvedSubGallery } from '@simple-photo-gallery/common/theme';
 
 interface Props {
   title?: string;
@@ -9,9 +9,10 @@ interface Props {
   subGalleries: ResolvedSubGallery[];
   isHomepage?: boolean;
   defaultLanguage?: string;
+  translations?: Record<string, ResolvedGalleryTranslation>;
 }
 
-const { title, parsedDescription, subGalleries, isHomepage = false, defaultLanguage = 'en' } = Astro.props;
+const { title, parsedDescription, subGalleries, isHomepage = false, defaultLanguage = 'en', translations } = Astro.props;
 ---
 
 <section class="sub-galleries">
@@ -19,12 +20,22 @@ const { title, parsedDescription, subGalleries, isHomepage = false, defaultLangu
     {
       title && (
         <div class="sub-galleries__header">
-          {isHomepage ? (
-            <h1 class="sub-galleries__header-title">{title}</h1>
-          ) : (
-            <h2 class="sub-galleries__header-title">{title}</h2>
-          )}
-          {parsedDescription && (
+          {translations &&
+            Object.entries(translations).map(([language, translation]) => (
+              <div data-language={language}>
+                {isHomepage ? (
+                  <h1 class="sub-galleries__header-title">{translation.title}</h1>
+                ) : (
+                  <h2 class="sub-galleries__header-title">{translation.title}</h2>
+                )}
+                {translation.parsedDescription && (
+                  <div class="sub-galleries__header-description markdown-content" set:html={translation.parsedDescription} />
+                )}
+              </div>
+            ))}
+          {!translations && isHomepage && <h1 class="sub-galleries__header-title">{title}</h1>}
+          {!translations && !isHomepage && <h2 class="sub-galleries__header-title">{title}</h2>}
+          {!translations && parsedDescription && (
             <div class="sub-galleries__header-description markdown-content" set:html={parsedDescription} />
           )}
         </div>
