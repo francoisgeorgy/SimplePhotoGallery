@@ -75,6 +75,7 @@ spg init
 # spg init --config conf/francoisgeorgy-ch.json
 # spg init --config conf/francoisgeorgy-ch.json --force
 spg build
+# spg build -r -g /Users/francois/photos/publish
 ```
 
 The generated gallery is created in the photo folder:
