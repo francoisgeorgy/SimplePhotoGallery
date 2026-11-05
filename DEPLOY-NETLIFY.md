@@ -6,7 +6,7 @@ These instructions publish a gallery built with `spg` on your Mac to Netlify, se
 https://photos.francoisgeorgy.ch/
 ```
 
-The gallery is a plain static site, so Netlify only hosts files. There is no build step on Netlify: you build locally with `spg build` and upload the result with the Netlify CLI, using `scripts/deploy-netlify.sh`.
+The gallery is a plain static site, so Netlify only hosts files. There is no build step on Netlify: you build locally with `spg build` and upload the result with the Netlify CLI, using `scripts/deploy-netlify.sh`. The script reads all its settings from the same JSON config file used by `spg init --config`.
 
 > **See also:** [Run a Local Fork](./RUN-LOCAL.md) | [Deployment Guide](./docs/deployment.md) | [build command](./docs/commands/build.md)
 
@@ -32,7 +32,7 @@ The whole folder is the website, except for a few files that are not needed onli
 - dotfiles, such as `.DS_Store`
 - RAW files and sidecars (`.dng`, `.cr2`, `.cr3`, `.nef`, `.arw`, `.raf`, `.orf`, `.rw2`, `.xmp`)
 
-Use `--exclude` for anything else you want to keep private.
+Add patterns to `netlify.exclude` in the config file for anything else you want to keep private.
 
 ## One-Time Setup
 
@@ -110,47 +110,74 @@ Once DNS resolves, Netlify issues a free Let's Encrypt certificate automatically
 
 ## Deploying
 
-From the repository root (or with the full path to the script):
+The script assumes the gallery was already initialized (`spg init --config ...`). By default it deploys the gallery as it is. Pass `--build` to run `spg build` first.
 
 ```bash
 # Preview: uploads a draft deploy and prints a unique preview URL
-./scripts/deploy-netlify.sh -g ~/Pictures/my-gallery -s francoisgeorgy-photos
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json
 
 # Production: publishes to https://photos.francoisgeorgy.ch/
-./scripts/deploy-netlify.sh -g ~/Pictures/my-gallery -s francoisgeorgy-photos --prod
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json --prod
 
 # Build first, then publish
-./scripts/deploy-netlify.sh -g ~/Pictures/my-gallery -s francoisgeorgy-photos --build --prod
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json --build --prod
 ```
 
-To skip typing the site name every time, set it once in your shell profile (`~/.zshrc`):
+### Config file
 
-```bash
-export NETLIFY_SITE=francoisgeorgy-photos
+The script reads these properties from the JSON config file. `spg init` ignores the deploy-only ones.
+
+```json
+{
+  "baseFolder": "/Users/francois/photos/publish",
+  "recursive": true,
+  "cloudflare": true,
+  "prune": true,
+  "netlify": {
+    "site": "francoisgeorgy-photos",
+    "noindex": false,
+    "exclude": []
+  },
+  ...
+}
 ```
+
+| Property          | Description                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `baseFolder`      | Gallery folder to deploy (required)                                                |
+| `netlify.site`    | Netlify site name or ID (required)                                                 |
+| `netlify.noindex` | Ask search engines not to index the gallery or its images (default: `false`)       |
+| `netlify.exclude` | Extra file patterns to leave out (default: `[]`)                                   |
+| `recursive`       | With `--build`: build sub-galleries too (default: `true`)                          |
+| `cloudflare`      | With `--build`: include Cloudflare Web Analytics (default: `false`). `spg init` also reads it |
+| `prune`           | With `--build`: remove entries whose photos are gone (default: `false`)            |
 
 ### Options
 
-| Option                  | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
-| `-g, --gallery <dir>`   | Gallery folder to deploy (default: current directory)        |
-| `-s, --site <name\|id>` | Netlify site name or ID (default: `$NETLIFY_SITE`)           |
-| `-b, --build`           | Run `spg build -r` before deploying (includes sub-galleries) |
-| `-p, --prod`            | Deploy to production instead of a draft preview              |
-| `-m, --message <text>`  | Deploy message shown in the Netlify deploy list              |
-| `-x, --exclude <glob>`  | Extra file pattern to leave out (repeatable)                 |
-| `-n, --dry-run`         | Stage the files and list them without deploying              |
-| `--noindex`             | Ask search engines not to index the gallery or its images    |
+| Option                 | Description                                                         |
+| ---------------------- | ------------------------------------------------------------------- |
+| `-c, --config <file>`  | JSON config file (required)                                         |
+| `-b, --build`          | Run `spg build` before deploying                                    |
+| `--recursive`          | Build sub-galleries too (on by default, unless the config disables it) |
+| `--cloudflare`         | Build with `--cloudflare`, same as `"cloudflare": true`             |
+| `--prune`              | Build with `--prune`, same as `"prune": true`                       |
+| `-p, --prod`           | Deploy to production instead of a draft preview                     |
+| `-m, --message <text>` | Deploy message shown in the Netlify deploy list                     |
+| `-n, --dry-run`        | Stage the files and list them without deploying                     |
+
+A build flag is on when it is set in the config file or passed on the command line.
 
 Run with `--dry-run` first to check exactly which files will go online.
 
-`--noindex` adds a Netlify `_headers` file that sends `X-Robots-Tag: noindex, noimageindex` with every page and image. Google, Bing and other well-behaved search engines then leave the gallery out of web and image search. It does not stop scrapers or people with the link. Use it on every deploy: a deploy without it removes the header again. Netlify supports `_headers` on all plans.
+`netlify.noindex` adds a Netlify `_headers` file that sends `X-Robots-Tag: noindex, noimageindex` with every page and image. Google, Bing and other well-behaved search engines then leave the gallery out of web and image search. It does not stop scrapers or people with the link. Netlify supports `_headers` on all plans.
 
 ### How it works
 
-1. The script checks that the folder contains a built gallery (`index.html` and `gallery/`).
-2. It mirrors the folder with `rsync` into `~/.cache/spg-netlify/<site>/`, applying the exclusions above. The staging copy is kept between runs, so later runs only copy changed files. Delete that folder to free disk space.
-3. It runs `netlify deploy --dir <staging> --site <site>`, plus `--prod` if you passed it.
+1. The script reads the config file. It needs `node`, which `spg` already requires.
+2. With `--build`, it runs `spg build --gallery <baseFolder>` with `--recursive`, `--cloudflare` and `--prune` as configured.
+3. It checks that the folder contains a built gallery (`index.html` and `gallery/`).
+4. It mirrors the folder with `rsync` into `~/.cache/spg-netlify/<site>/`, applying the exclusions above. The staging copy is kept between runs, so later runs only copy changed files. Delete that folder to free disk space.
+5. It runs `netlify deploy --dir <staging> --site <site>`, plus `--prod` if you passed it.
 
 Netlify compares file hashes and uploads only new or changed files. The first deploy of a large gallery takes a while. Later deploys after adding a few photos are quick.
 
@@ -158,7 +185,7 @@ Netlify compares file hashes and uploads only new or changed files. The first de
 
 ```bash
 # add or remove photos in the folder, edit gallery.json if needed, then:
-./scripts/deploy-netlify.sh -g ~/Pictures/my-gallery --build --prod
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json --build --prod
 ```
 
 Every deploy is kept in the Netlify UI under **Deploys**. If something goes wrong, open an earlier deploy and click **Publish deploy** to roll back instantly.

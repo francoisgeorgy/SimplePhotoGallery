@@ -8,4 +8,11 @@
 
 ## Deploy
 
-TO BE DOCUMENTED
+```bash
+# deploy the built gallery (draft preview, then production)
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json --prod
+
+# build (recursive, cloudflare and prune come from the config), then deploy
+./scripts/deploy-netlify.sh -c conf/francoisgeorgy-ch.json --build --prod
+```

@@ -10,6 +10,14 @@
         "fr": ""
     },
     "url": "https://photos.francoisgeorgy.ch/",
+    "recursive": true,
+    "cloudflare": true,
+    "prune": true,
+    "netlify": {
+        "site": "francoisgeorgy-photos",
+        "noindex": false,
+        "exclude": []
+    },
     "albums": {
         "after-hours": {
             "title": {
@@ -17,8 +25,8 @@
                 "fr": "À la tombée du jour"
             },
             "description": {
-                "en": "City, twilight, night, artificial lights",
-                "fr": "Ville, crépuscule, nuit, lumières artificielles"
+                "en": "Between day and night.",
+                "fr": "Entre jour et nuit."
             }
         },
         "against-the-light": {
@@ -57,8 +65,8 @@
                 "fr": "Lignes et formes"
             },
             "description": {
-                "en": "Architecture, geometry, perspectives",
-                "fr": "Architecture, géométrie, perspectives"
+                "en": "Architecture, geometry & perspectives",
+                "fr": "Architecture, géométrie & perspectives"
             }
         },
         "street-art": {
@@ -87,8 +95,38 @@
                 "fr": "Fragments urbains"
             },
             "description": {
-                "en": "Street scenes, details, and urban atmospheres",
-                "fr": "Scènes de rue, détails et ambiances urbaines"
+                "en": "Street scenes and urban atmospheres",
+                "fr": "Scènes de rue et ambiances urbaines"
+            }
+        },
+        "in-the-mist": {
+            "title": {
+                "en": "In the mist",
+                "fr": "Dans la brume"
+            },
+            "description": {
+                "en": "The city in the mist.",
+                "fr": "La ville dans la brume."
+            }
+        },
+        "reflections": {
+            "title": {
+                "en": "Reflections",
+                "fr": "Reflets"
+            },
+            "description": {
+                "en": "Light and reflections.",
+                "fr": "Jeux de lumière et de reflets."
+            }
+        },
+        "after-dark": {
+            "title": {
+                "en": "After Dark",
+                "fr": "Quand la ville dort"
+            },
+            "description": {
+                "en": "City lights and shadows after dark.",
+                "fr": "Lumières et ombres de la ville la nuit."
             }
         }
     }
