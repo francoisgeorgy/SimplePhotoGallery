@@ -1,6 +1,6 @@
 ## Init
  
-`spg init --config conf/francoisgeorgy-ch.json --force`
+`spg init --config /Users/francois/dev/websites/SimplePhotoGallery/conf/francoisgeorgy-ch.json --force`
 
 ## Build
 
