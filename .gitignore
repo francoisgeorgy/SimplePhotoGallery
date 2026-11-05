@@ -147,3 +147,5 @@ cli/tests/fixtures/test
 
 # Theme
 themes/*/_build
+/.idea/misc.xml
+/.idea/workspace.xml
