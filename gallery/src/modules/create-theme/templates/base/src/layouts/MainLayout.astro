@@ -58,13 +58,15 @@ const rowHeightMax = thumbnails?.size ?? 160;
       }
 
       const preferredLanguages = navigator.languages || [navigator.language];
-      const browserLanguage = availableLanguages.find((language) =>
-        preferredLanguages.some(
-          (preferred) =>
-            preferred.toLowerCase() === language.toLowerCase() ||
-            preferred.toLowerCase().startsWith(language.toLowerCase() + '-'),
-        ),
-      );
+      const browserLanguage = preferredLanguages
+        .map((preferred) =>
+          availableLanguages.find(
+            (language) =>
+              preferred.toLowerCase() === language.toLowerCase() ||
+              preferred.toLowerCase().startsWith(language.toLowerCase() + '-'),
+          ),
+        )
+        .find(Boolean);
       const language = availableLanguages.includes(savedLanguage) ? savedLanguage : browserLanguage || defaultLanguage;
       root.lang = language;
     })();

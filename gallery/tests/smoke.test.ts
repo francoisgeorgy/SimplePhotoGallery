@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
+import { runInNewContext } from 'node:vm';
 
 import { GalleryDataSchema, MediaFileSchema, ThumbnailSchema } from '@simple-photo-gallery/common';
 import { copySync } from 'fs-extra';
@@ -108,5 +109,25 @@ describe('gallery smoke flow', () => {
     expect(html).toContain('data-language-select="fr"');
     expect(html).toContain('navigator.languages');
     expect(html).toContain('spg-language');
+
+    const languageScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
+      .map((match) => match[1])
+      .find((script) => script?.includes('navigator.languages'));
+    expect(languageScript).toBeDefined();
+
+    const documentElement = {
+      dataset: {
+        availableLanguages: 'en,fr',
+        defaultLanguage: 'en',
+      },
+      lang: 'en',
+    };
+    runInNewContext(languageScript!, {
+      document: { documentElement },
+      localStorage: { getItem: () => null },
+      navigator: { languages: ['fr-CH', 'fr', 'en-US', 'en'] },
+    });
+
+    expect(documentElement.lang).toBe('fr');
   });
 });

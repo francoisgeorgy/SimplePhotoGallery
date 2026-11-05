@@ -55,7 +55,7 @@ netlify sites:create --name francoisgeorgy-photos
 
 The site name must be unique across Netlify. It also gives you a default URL, for example `https://francoisgeorgy-photos.netlify.app`. You can also create the site in the Netlify UI by choosing **Add new site → Deploy manually**.
 
-Note the site name or the **Site ID** (in **Site configuration → General**). The deploy script needs one of them.
+Note the **Site ID** (in **Site configuration → General**). The deploy script needs this UUID.
 
 ### 3. Tell the gallery its public URL
 
@@ -134,7 +134,7 @@ The script reads these properties from the JSON config file. `spg init` ignores 
   "cloudflare": true,
   "prune": true,
   "netlify": {
-    "site": "francoisgeorgy-photos",
+    "site": "5b18c92f-c384-4ff8-bd78-931da7ebfd19",
     "noindex": false,
     "exclude": []
   },
@@ -145,7 +145,7 @@ The script reads these properties from the JSON config file. `spg init` ignores 
 | Property          | Description                                                                        |
 | ----------------- | ---------------------------------------------------------------------------------- |
 | `baseFolder`      | Gallery folder to deploy (required)                                                |
-| `netlify.site`    | Netlify site name or ID (required)                                                 |
+| `netlify.site`    | Netlify project ID (required)                                                      |
 | `netlify.noindex` | Ask search engines not to index the gallery or its images (default: `false`)       |
 | `netlify.exclude` | Extra file patterns to leave out (default: `[]`)                                   |
 | `recursive`       | With `--build`: build sub-galleries too (default: `true`)                          |
@@ -177,7 +177,7 @@ Run with `--dry-run` first to check exactly which files will go online.
 2. With `--build`, it runs `spg build --gallery <baseFolder>` with `--recursive`, `--cloudflare` and `--prune` as configured.
 3. It checks that the folder contains a built gallery (`index.html` and `gallery/`).
 4. It mirrors the folder with `rsync` into `~/.cache/spg-netlify/<site>/`, applying the exclusions above. The staging copy is kept between runs, so later runs only copy changed files. Delete that folder to free disk space.
-5. It runs `netlify deploy --dir <staging> --site <site>`, plus `--prod` if you passed it.
+5. From the staging directory, it runs `netlify deploy --dir . --site <project-id>`, plus `--prod` if you passed it.
 
 Netlify compares file hashes and uploads only new or changed files. The first deploy of a large gallery takes a while. Later deploys after adding a few photos are quick.
 
@@ -196,7 +196,7 @@ If you don't mind publishing `gallery.json` and other stray files, you can deplo
 
 ```bash
 cd ~/Pictures/my-gallery
-netlify deploy --dir . --site francoisgeorgy-photos --prod
+netlify deploy --dir . --site 5b18c92f-c384-4ff8-bd78-931da7ebfd19 --prod
 ```
 
 You can also drag the folder onto the **Deploys** page of the site in the Netlify UI.
@@ -208,7 +208,7 @@ Netlify works well for galleries of a few hundred photos. If the folder grows to
 ## Troubleshooting
 
 - **`Not logged in` / `Unauthorized`**: run `netlify login` again.
-- **`Site not found`**: check the name with `netlify sites:list`, or use the Site ID instead.
+- **`Site not found`**: run `netlify sites:list --json` and verify the Site ID in the config.
 - **Domain shows "Awaiting External DNS"**: the CNAME record isn't visible yet. Check it with `dig` and wait for DNS propagation.
 - **Social preview shows no image**: make sure `metadata.image` in `gallery.json` is an absolute `https://photos.francoisgeorgy.ch/...` URL, then rebuild and redeploy.
 - **Photos missing on the live site**: run with `--dry-run` and check that the files aren't caught by an exclude pattern. Also check that the photos are in the gallery folder itself. If the gallery was created with `spg init -g`, `spg build` must copy them there first.

@@ -28,7 +28,7 @@ Options:
 
 Config properties used:
   baseFolder            Gallery folder to deploy (required)
-  netlify.site          Netlify site name or ID (required)
+  netlify.site          Netlify project ID (required)
   netlify.noindex       Ask search engines not to index the gallery (default: false)
   netlify.exclude       Extra rsync exclude patterns (default: [])
   recursive             Build flag (default: true)
@@ -176,9 +176,9 @@ if [[ "$dry_run" == true ]]; then
   exit 0
 fi
 
-deploy_args=(deploy --dir "$staging_dir" --site "$site")
+deploy_args=(deploy --dir . --site "$site")
 [[ "$prod" == true ]] && deploy_args+=(--prod)
 [[ -n "$message" ]] && deploy_args+=(--message "$message")
 
 echo "==> Deploying to Netlify site '$site' ($([[ "$prod" == true ]] && echo production || echo draft))"
-"${netlify_cmd[@]}" "${deploy_args[@]}"
+(cd "$staging_dir" && "${netlify_cmd[@]}" "${deploy_args[@]}")

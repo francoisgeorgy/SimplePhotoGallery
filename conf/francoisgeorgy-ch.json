@@ -14,7 +14,7 @@
     "cloudflare": true,
     "prune": true,
     "netlify": {
-        "site": "francoisgeorgy-photos",
+        "site": "5b18c92f-c384-4ff8-bd78-931da7ebfd19",
         "noindex": false,
         "exclude": []
     },
