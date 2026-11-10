@@ -102,4 +102,18 @@ describe('createGallerySocialMediaCardImage', () => {
     expect(metadata.width).toBe(1200);
     expect(metadata.height).toBe(631);
   });
+
+  test('should create social media card with multiline title', async () => {
+    const outputPath = path.join(tempDir, 'social-media-card-multiline.jpg');
+    const title = 'François Georgy\nPhotographies';
+
+    await createGallerySocialMediaCardImage(testImagePath, title, outputPath);
+
+    expect(fs.existsSync(outputPath)).toBe(true);
+
+    // Verify the image dimensions
+    const metadata = await sharp(outputPath).metadata();
+    expect(metadata.width).toBe(1200);
+    expect(metadata.height).toBe(631);
+  });
 });

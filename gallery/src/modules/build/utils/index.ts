@@ -17,32 +17,40 @@ import type { ConsolaInstance } from 'consola';
  * @returns Array of text lines
  */
 function wrapText(text: string, maxCharsPerLine: number): string[] {
-  const words = text.split(' ');
+  const paragraphs = text.split(/\r?\n/);
   const lines: string[] = [];
-  let currentLine = '';
 
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-
-    // If a single word is longer than max, force it on its own line
-    if (word.length > maxCharsPerLine) {
-      if (currentLine) {
-        lines.push(currentLine);
-        currentLine = '';
-      }
-      lines.push(word);
-    } else if (testLine.length > maxCharsPerLine && currentLine) {
-      // If the test line is too long and we have words in current line, start new line
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = testLine;
+  for (const paragraph of paragraphs) {
+    const words = paragraph.split(' ').filter(Boolean);
+    if (words.length === 0) {
+      lines.push('');
+      continue;
     }
-  }
 
-  // Add the last line
-  if (currentLine) {
-    lines.push(currentLine);
+    let currentLine = '';
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+
+      // If a single word is longer than max, force it on its own line
+      if (word.length > maxCharsPerLine) {
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = '';
+        }
+        lines.push(word);
+      } else if (testLine.length > maxCharsPerLine && currentLine) {
+        // If the test line is too long and we have words in current line, start new line
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+
+    // Add the last line
+    if (currentLine) {
+      lines.push(currentLine);
+    }
   }
 
   return lines;
